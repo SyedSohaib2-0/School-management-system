@@ -1,0 +1,46 @@
+﻿# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+
+# Build and installer outputs
+build/
+dist/
+installer_output/
+*.exe
+*.msi
+
+# Database and runtime data
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3
+*.log
+.env
+.env.*
+
+# Generated archives and backups
+*.zip
+Patch_Backups/
+Patch_Output/
+Rebuild_Output/
+Release_Output/
+Build_Backups/
+Database_Alignment_Backups/
+Database_Reset_Backups/
+Financial_Clock_Recovery_Backups/
+Student_Data_Load_Backups/
+Student_Data_Load_Output/
+HMS_V31_*_Artifacts/
+.hms_*/
+
+# IDE
+.idea/
+.vscode/
