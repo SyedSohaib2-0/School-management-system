@@ -150,7 +150,7 @@ class StudentStatusRegressionTests(unittest.TestCase):
             self.assertEqual(int(histories[-1]["effective_year"]), now.year)
             self.assertEqual(histories[-1]["changed_by"], "REACTIVATION:regression")
 
-    def test_archived_status_cannot_be_assigned_manually(self):
+    def test_archived_status_can_be_assigned_manually_and_releases_roll(self):
         with IsolatedApplication() as app:
             class_1a = insert_class(app, "1", "A")
             student_id = insert_student(
@@ -159,15 +159,16 @@ class StudentStatusRegressionTests(unittest.TestCase):
                 admission_number="H6",
                 roll_number=1,
             )
-            with self.assertRaisesRegex(ValueError, "assigned automatically"):
-                update_status(app, student_id, "Archived")
+            update_status(app, student_id, "Archived")
 
             row = fetch_one(
                 app,
-                "SELECT student_status FROM students WHERE student_id=?",
+                "SELECT student_status,roll_number,released_roll_number FROM students WHERE student_id=?",
                 (student_id,),
             )
-            self.assertEqual(row["student_status"], "Active")
+            self.assertEqual(row["student_status"], "Archived")
+            self.assertEqual(int(row["roll_number"]), -student_id)
+            self.assertEqual(int(row["released_roll_number"]), 1)
 
 
 if __name__ == "__main__":

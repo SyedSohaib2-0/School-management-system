@@ -8,10 +8,6 @@ a = Analysis(
         ('app\\styles.qss', 'app'),
         ('app\\license_public_key.pem', 'app'),
         (
-            'app\\licence_generator\\encrypted_signing_key.json',
-            'app\\licence_generator',
-        ),
-        (
             'app\\assets\\hira_model_school_icon.png',
             'app\\assets',
         ),
@@ -32,7 +28,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['app.licence_generator'],
     noarchive=False,
     optimize=0,
 )

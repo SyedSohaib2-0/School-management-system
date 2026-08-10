@@ -2624,14 +2624,59 @@ def archive_eligible_dropped_students(
 # Read / Search
 # ---------------------------------------------------------------------------
 
+_STUDENT_CURRENT_STATUS_COLUMNS = """
+    CASE
+        WHEN s.student_status = 'Active' THEN COALESCE(
+            (SELECT h.effective_datetime
+             FROM student_status_history h
+             WHERE h.student_id=s.student_id
+               AND h.new_status='Active'
+               AND h.event_type IN ('REACTIVATION', 'COMING_SESSION_ACTIVATION')
+             ORDER BY h.effective_datetime DESC, h.id DESC LIMIT 1),
+            s.admission_date
+        )
+        WHEN s.student_status = 'Dropped' THEN
+            (SELECT h.effective_datetime FROM student_status_history h
+             WHERE h.student_id=s.student_id AND h.event_type='DROP'
+             ORDER BY h.effective_datetime DESC, h.id DESC LIMIT 1)
+        WHEN s.student_status IN ('Graduated', 'Partially Graduated') THEN
+            (SELECT g.graduation_date FROM graduation_records g
+             WHERE g.student_id=s.student_id AND g.is_reversed=0
+             ORDER BY g.graduation_date DESC, g.graduated_record_id DESC LIMIT 1)
+        WHEN s.student_status = 'Archived' THEN
+            (SELECT h.effective_datetime FROM student_status_history h
+             WHERE h.student_id=s.student_id AND h.event_type='ARCHIVE'
+             ORDER BY h.effective_datetime DESC, h.id DESC LIMIT 1)
+        ELSE s.admission_date
+    END AS current_status_date,
+    CASE
+        WHEN s.student_status = 'Active' THEN COALESCE(
+            (SELECT h.event_type FROM student_status_history h
+             WHERE h.student_id=s.student_id
+               AND h.new_status='Active'
+               AND h.event_type IN ('REACTIVATION', 'COMING_SESSION_ACTIVATION')
+             ORDER BY h.effective_datetime DESC, h.id DESC LIMIT 1),
+            'ADMISSION'
+        )
+        WHEN s.student_status = 'Dropped' THEN 'DROP'
+        WHEN s.student_status IN ('Graduated', 'Partially Graduated') THEN 'GRADUATION'
+        WHEN s.student_status = 'Archived' THEN 'ARCHIVE'
+        ELSE 'ADMISSION'
+    END AS current_status_event
+"""
+
+
+def _student_read_select() -> str:
+    return f"s.*, c.class_name, {_STUDENT_CURRENT_STATUS_COLUMNS}"
+
 def get_student_by_id(student_id: int):
     """Return the complete student record, or None if not found."""
     connection = get_connection()
     try:
         cursor = connection.cursor()
         cursor.execute(
-            """
-            SELECT s.*, c.class_name
+            f"""
+            SELECT {_student_read_select()}
             FROM students s
             LEFT JOIN classes c ON s.class_id = c.id
             WHERE s.student_id = ?
@@ -2660,8 +2705,8 @@ def search_students(
     them. Student Management Search passes include_archived=True and is the
     only normal screen allowed to display archived students.
     """
-    query = """
-        SELECT s.*, c.class_name
+    query = f"""
+        SELECT {_student_read_select()}
         FROM students s
         LEFT JOIN classes c ON s.class_id = c.id
         WHERE 1 = 1
@@ -3198,14 +3243,16 @@ def update_student(
                 "another status. Completion status is controlled by fees."
             )
 
-        if (
+        archiving_student = (
             student_status == STATUS_ARCHIVED
             and existing_status != STATUS_ARCHIVED
-        ):
+        )
+        if archiving_student and existing_status not in {
+            STATUS_ACTIVE,
+            STATUS_DROPPED,
+        }:
             raise ValueError(
-                "Archived status is assigned automatically after "
-                "a Dropped student's dues are cleared and a later "
-                "academic session has started."
+                "Only an Active or Dropped student can be manually Archived."
             )
 
         if (
@@ -3266,6 +3313,11 @@ def update_student(
             drop_date = datetime.now()
             effective_month = drop_date.month
             effective_year = drop_date.year
+
+        elif archiving_student:
+            archive_date = datetime.now()
+            effective_month = archive_date.month
+            effective_year = archive_date.year
 
         existing_admission_number = str(
             existing_student["admission_number"] or ""
@@ -3423,7 +3475,9 @@ def update_student(
             or int(existing_student["roll_number"]) <= 0
         )
         lifecycle_locked_profile_edit = (
-            released_or_completed and not reactivating_to_active
+            released_or_completed
+            and not reactivating_to_active
+            and not archiving_student
         )
         if lifecycle_locked_profile_edit:
             if requested_class_id != old_class_id:
@@ -3495,17 +3549,35 @@ def update_student(
             old_class_id != new_class_id
         )
 
-        if class_changed and dropping_from_active:
+        if class_changed and (dropping_from_active or archiving_student):
             raise ValueError(
-                "Transfer and Drop cannot be completed in the same save. "
-                "Either transfer the Active student first or Drop the "
-                "student in the current class."
+                "Transfer and Drop/Archive cannot be completed in the same "
+                "save. Keep the current class when Dropping or Archiving "
+                "the student."
             )
 
         if student_status == STATUS_ACTIVE and roll_number <= 0:
             raise ValueError(
                 "Active students must have a positive Roll Number."
             )
+
+        archive_released_roll_number = None
+        if archiving_student:
+            existing_released_roll = existing_student["released_roll_number"]
+            if existing_released_roll is not None:
+                archive_released_roll_number = int(existing_released_roll)
+            elif int(existing_student["roll_number"]) > 0:
+                archive_released_roll_number = int(existing_student["roll_number"])
+            else:
+                raise ValueError(
+                    "The student's historical Roll Number cannot be determined "
+                    "for archiving."
+                )
+
+            # Preserve the former positive number for display/search and free
+            # it for immediate reuse in the class. The student-specific
+            # negative sentinel cannot collide with a live positive roll.
+            roll_number = -abs(int(student_id))
 
         manual_promotion_after_failure = False
         manual_backward_repeat = False
@@ -3778,13 +3850,13 @@ def update_student(
                 updated_admission_number,
                 roll_number,
                 (
-                    None
+                    archive_released_roll_number
+                    if archiving_student
+                    else None
                     if student_status == STATUS_ACTIVE
                     or class_changed
                     or dropping_from_active
-                    else existing_student[
-                        "released_roll_number"
-                    ]
+                    else existing_student["released_roll_number"]
                 ),
                 new_class_id,
                 normalized_student_name,
@@ -3866,7 +3938,7 @@ def update_student(
                 ),
             )
 
-        if dropping_from_active or reactivating_to_active:
+        if dropping_from_active or reactivating_to_active or archiving_student:
             cursor.execute(
                 """
                 INSERT INTO student_status_history(
@@ -3878,10 +3950,18 @@ def update_student(
                     int(student_id),
                     existing_status,
                     student_status,
-                    "DROP" if dropping_from_active else "REACTIVATION",
+                    (
+                        "ARCHIVE"
+                        if archiving_student
+                        else "DROP"
+                        if dropping_from_active
+                        else "REACTIVATION"
+                    ),
                     now,
                     (
-                        "Student dropped from active enrolment."
+                        "Student manually archived and removed from enrolment."
+                        if archiving_student
+                        else "Student dropped from active enrolment."
                         if dropping_from_active
                         else "Student reactivated through the controlled workflow."
                     ),
@@ -3891,11 +3971,22 @@ def update_student(
                 ),
             )
 
-        if class_changed or reactivating_to_active or dropping_from_active:
+        if (
+            class_changed
+            or reactivating_to_active
+            or dropping_from_active
+            or archiving_student
+        ):
 
             from app.services import fee_service
 
-            if dropping_from_active:
+            if archiving_student:
+                fee_service.remove_unpaid_fee_records_for_archive(
+                    student_id=student_id,
+                    connection=connection,
+                )
+
+            elif dropping_from_active:
                 fee_service.pause_fee_records_after_drop(
                     student_id=student_id,
                     drop_month=effective_month,

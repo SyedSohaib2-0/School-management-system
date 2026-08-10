@@ -502,6 +502,43 @@ def _student_print_admission_date(
         return "-"
 
 
+def _student_status_date_field(student_row):
+    """Return the current lifecycle-date label and its readable value."""
+    status = str(
+        _student_print_row_value(student_row, "student_status", "") or ""
+    ).strip()
+    event_type = str(
+        _student_print_row_value(student_row, "current_status_event", "") or ""
+    ).strip().upper()
+    raw_date = _student_print_row_value(student_row, "current_status_date")
+
+    labels = {
+        "Dropped": "Dropped On",
+        "Graduated": "Graduated On",
+        "Partially Graduated": "Graduated On",
+        "Archived": "Archived On",
+        "Coming Session": "Active From",
+    }
+    if status == "Active":
+        label = "Reactivated On" if event_type == "REACTIVATION" else "Active From"
+    else:
+        label = labels.get(status, "Status Date")
+
+    if not raw_date:
+        return label, "-"
+
+    cleaned = str(raw_date).strip()
+    try:
+        parsed = datetime.fromisoformat(cleaned)
+        return label, f"{parsed.day:02d} {MONTH_NAMES[parsed.month - 1]} {parsed.year:04d}"
+    except (TypeError, ValueError):
+        try:
+            parsed = datetime.strptime(cleaned[:10], "%Y-%m-%d")
+            return label, f"{parsed.day:02d} {MONTH_NAMES[parsed.month - 1]} {parsed.year:04d}"
+        except (TypeError, ValueError):
+            return label, _student_print_safe_text(cleaned)
+
+
 def _student_print_date_of_birth(
     student_row,
 ) -> str:
@@ -687,6 +724,7 @@ def build_student_print_fields(
     print/PDF output. Document submission statuses are intentionally
     excluded.
     """
+    status_date_label, status_date_value = _student_status_date_field(student_row)
     return [
         (
             "Admission Number",
@@ -808,6 +846,10 @@ def build_student_print_fields(
                 )
             ),
         ),
+        (
+            status_date_label,
+            status_date_value,
+        ),
     ]
 
 
@@ -925,6 +967,9 @@ def build_professional_student_print_html(
     student_status = field_value(
         "Student Status"
     )
+    status_date_label, status_date_value = _student_status_date_field(
+        student_row
+    )
 
     all_values = [
         admission_number,
@@ -941,6 +986,7 @@ def build_professional_student_print_html(
         admission_date,
         date_of_birth,
         student_status,
+        status_date_value,
     ]
 
     total_character_count = sum(
@@ -1221,6 +1267,19 @@ def build_professional_student_print_html(
                 + value_cell(
                     student_status,
                     "20%",
+                )
+                + "</tr>"
+            ),
+            (
+                "<tr>"
+                + label_cell(
+                    status_date_label,
+                    "14%",
+                )
+                + value_cell(
+                    status_date_value,
+                    "86%",
+                    colspan=5,
                 )
                 + "</tr>"
             ),
@@ -6091,7 +6150,7 @@ class EditStudentPage(QWidget):
         status_layout.setSpacing(8)
 
         self.status_combo = QComboBox()
-        self.status_combo.addItems(["Active", "Dropped"])
+        self.status_combo.addItems(["Active", "Dropped", "Archived"])
         self.status_combo.currentTextChanged.connect(
             self._on_class_changed
         )
@@ -7221,10 +7280,14 @@ class EditStudentPage(QWidget):
         self.status_combo.blockSignals(True)
         self.status_combo.clear()
         if loaded_status == "Active":
-            self.status_combo.addItems(["Active", "Dropped"])
+            self.status_combo.addItems(["Active", "Dropped", "Archived"])
             self.status_combo.setEnabled(True)
             self.reactivate_button.setVisible(False)
-        elif loaded_status in {"Dropped", "Archived"}:
+        elif loaded_status == "Dropped":
+            self.status_combo.addItems(["Dropped", "Archived"])
+            self.status_combo.setEnabled(True)
+            self.reactivate_button.setVisible(True)
+        elif loaded_status == "Archived":
             self.status_combo.addItem(loaded_status)
             self.status_combo.setEnabled(False)
             self.reactivate_button.setVisible(True)
@@ -8245,6 +8308,28 @@ class EditStudentPage(QWidget):
 
             self.pending_update_data = information
 
+        original_status = str(
+            (self.original_student_snapshot or {}).get("student_status") or ""
+        ).strip()
+        requested_status = str(
+            self.pending_update_data.get("student_status") or ""
+        ).strip()
+        if requested_status == "Archived" and original_status != "Archived":
+            confirmation = QMessageBox.question(
+                self,
+                "Archive Student",
+                (
+                    "Archive this student now?\n\n"
+                    "All Unpaid fee rows will be permanently removed. Paid "
+                    "fees and receipt history will remain unchanged. The "
+                    "student will leave active enrolment and sibling-fee "
+                    "links will be recalculated. The current Roll Number "
+                    "will be released for another student."
+                ),
+            )
+            if confirmation != QMessageBox.Yes:
+                return
+
         date_of_birth = (
             self._extract_date_of_birth()
         )
@@ -9254,4 +9339,3 @@ class EditStudentPage(QWidget):
         self.main_window.go_to_page(
             navigation.PAGE_SEARCH_STUDENT
         )
-

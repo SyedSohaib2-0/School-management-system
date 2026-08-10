@@ -1,706 +1,726 @@
 {
-  "application_name": "Hira Model School",
-  "application_version": "1.1.0",
-  "patch": "V31 Legacy classes.is_active Migration-Order Compatibility Hotfix",
-  "change_summary": [
-    "Defers the classes active-index creation until the legacy is_active migration column exists.",
-    "Adds a regression test that preserves a legacy class record while upgrading to schema 23.",
-    "Keeps the already corrected Expense Search and stable-manifest regression tests unchanged."
-  ],
-  "generated_at_utc": "2026-08-05T11:06:08.443182+00:00",
-  "file_count": 136,
-  "files": [
-    {
-      "path": "app/__init__.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "size_bytes": 0
-    },
-    {
-      "path": "app/assets/hira_model_school_icon.ico",
-      "sha256": "f0bf25dd6f2ce6d8757110e68b5de512b52e3b5f3094c47d6fa3e7f2034f050a",
-      "size_bytes": 42686
-    },
-    {
-      "path": "app/assets/hira_model_school_icon.png",
-      "sha256": "bee62665af8bd321986ab3efc9568d82bdd5884749599c3e3a5fe3553834c795",
-      "size_bytes": 13752
-    },
-    {
-      "path": "app/auth_dialogs.py",
-      "sha256": "881a8af571c50a2dfee27854cf726f135fa5072333499a6e7b5bdec25bf9dda0",
-      "size_bytes": 23553
-    },
-    {
-      "path": "app/config.py",
-      "sha256": "50654e6c61c06a922977aacab6a3c5de72611d2b9ea5bb3805dd04b8f87e6afe",
-      "size_bytes": 7758
-    },
-    {
-      "path": "app/database.py",
-      "sha256": "f0687b402b7ffd065e681b4508e6da20dbcc1448a0194d9354a281172cfe7af0",
-      "size_bytes": 135230
-    },
-    {
-      "path": "app/licence_generator/__init__.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "size_bytes": 0
-    },
-    {
-      "path": "app/licence_generator/activation_password_dialog.py",
-      "sha256": "6c757c19768076ef4a3ae407e8d2c598a977c974f6928771a611832ac0cb062a",
-      "size_bytes": 6207
-    },
-    {
-      "path": "app/licence_generator/encrypted_signing_key.json",
-      "sha256": "43c1b4afb80719804e5fa29e9807abca8185add11337a54343c9afdd63c1fe9a",
-      "size_bytes": 597
-    },
-    {
-      "path": "app/licence_generator/licence_generator_dialog.py",
-      "sha256": "aa4edfae667e51630844911847e5cc8be4912a9b396d760bc885bf5d1161624b",
-      "size_bytes": 20728
-    },
-    {
-      "path": "app/licence_generator/licence_security.py",
-      "sha256": "38c619dd468ed7103921b5b1e30209ac688933da70627d71fa6f42b1c681a978",
-      "size_bytes": 7843
-    },
-    {
-      "path": "app/license_public_key.pem",
-      "sha256": "d945c857b79aca3b4c8357933c22919d2bb9476539cd92b4ba16e2c15dbea740",
-      "size_bytes": 113
-    },
-    {
-      "path": "app/main_window.py",
-      "sha256": "94a4a69bb90dd4c5838655be528b2cb0ecc3f1d7f157c5b542a6842f22b8aafc",
-      "size_bytes": 27343
-    },
-    {
-      "path": "app/modules/__init__.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "size_bytes": 0
-    },
-    {
-      "path": "app/modules/backup_management.py",
-      "sha256": "62c752a69967bddb76d03c09c58f9cd046802d1f2c77ccef096c30bc890a3710",
-      "size_bytes": 45230
-    },
-    {
-      "path": "app/modules/class_fee_status.py",
-      "sha256": "2ff2c1b2b7c62f4c8ce3f7e27691c5efbb4b7137776670d1a6b59c919338e839",
-      "size_bytes": 11782
-    },
-    {
-      "path": "app/modules/class_management.py",
-      "sha256": "d1c0866c18e2a26c76e866e792f87afac8ebddf31559bad8499fa4a77b4f9d02",
-      "size_bytes": 41699
-    },
-    {
-      "path": "app/modules/coming_session_capacity_report.py",
-      "sha256": "ac9f25a6f43b3b9bd4960cd1ba697c962026c125f83d224b05122796663e753c",
-      "size_bytes": 23886
-    },
-    {
-      "path": "app/modules/expense_management.py",
-      "sha256": "9a1583cbcef0ba830f946a805b00c8f342670959e46b2e1561b83cc9276487b4",
-      "size_bytes": 11296
-    },
-    {
-      "path": "app/modules/fee_management.py",
-      "sha256": "5264461a2b615ef1546d165609223a42a0b3aae1d35ae8931e1d9bb0a025e86b",
-      "size_bytes": 71711
-    },
-    {
-      "path": "app/modules/fee_receipt.py",
-      "sha256": "e2b2341d67c76f76e4df3927e1e1bc95ee9dd37ce58c206cb29ce9f012434528",
-      "size_bytes": 50966
-    },
-    {
-      "path": "app/modules/full_school_fee_list.py",
-      "sha256": "924e575cef72d381844c5972237a62260c428eabf0e3d15703e234ab66315469",
-      "size_bytes": 32847
-    },
-    {
-      "path": "app/modules/income_management.py",
-      "sha256": "3cc7cb74fd68612211cbbaa4f29488a8de29b015a946e6076e84090e471e8e2b",
-      "size_bytes": 32823
-    },
-    {
-      "path": "app/modules/month_range_fee_report.py",
-      "sha256": "50a6da2d17f0a6bbc4b95dbbb1d3465c9ece3199d0271dfa577fffe6b2ea6a9d",
-      "size_bytes": 32210
-    },
-    {
-      "path": "app/modules/pay_fee.py",
-      "sha256": "9f8660ca9dfd9ddbd039d4eccf9d37c0674a312a22d21dc49d759b5d4a9c9036",
-      "size_bytes": 53753
-    },
-    {
-      "path": "app/modules/promotion_management.py",
-      "sha256": "95137419442720a4367977beb84a9664a1529bc70beae407c73a395e8746694b",
-      "size_bytes": 20775
-    },
-    {
-      "path": "app/modules/real_time_finance.py",
-      "sha256": "39b4f17d97aabe12ce703aee52d95d196cf06c9307e6f37673160612852de6f9",
-      "size_bytes": 42139
-    },
-    {
-      "path": "app/modules/search_expense.py",
-      "sha256": "fd5e13e47eee7f2c83160ba9817093b1b101b483b155efb6235a1ea097ee0a69",
-      "size_bytes": 36337
-    },
-    {
-      "path": "app/modules/statistics_management.py",
-      "sha256": "b74fbc804d5087448eeb99c8679196aaaf4f3f4460f159d33eb50a5f57cb472b",
-      "size_bytes": 14938
-    },
-    {
-      "path": "app/modules/student_management.py",
-      "sha256": "2823a8fb9b3bfeeba294cca2517883263b71f4a808a6a0ea4fea3ffa8f7a12c9",
-      "size_bytes": 227878
-    },
-    {
-      "path": "app/navigation.py",
-      "sha256": "1652e6896b17d8e25129b3484ecbdf71d75ee16c59fde93006c2be6df3e243f2",
-      "size_bytes": 2469
-    },
-    {
-      "path": "app/normalization.py",
-      "sha256": "94cff66ca5a568992e33f9d71d8c0e45d17577fccde386ec22ad263aec49113a",
-      "size_bytes": 2449
-    },
-    {
-      "path": "app/schema_integrity.py",
-      "sha256": "1f3c4e000ad9ef98338078a00301dd6b59fd2b38f349e9fe90b5b63c7c13b897",
-      "size_bytes": 138573
-    },
-    {
-      "path": "app/services/__init__.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "size_bytes": 0
-    },
-    {
-      "path": "app/services/auth_service.py",
-      "sha256": "a20fb2a01941eef93cb5979ba62fd4e540ae4725903bf69feb065a9b32b45353",
-      "size_bytes": 13718
-    },
-    {
-      "path": "app/services/backup_crypto_service.py",
-      "sha256": "b7b891c752d824b1fe9c4e04e7941b8c4a6cd84cfa5132963dcb7073a94e83cd",
-      "size_bytes": 53151
-    },
-    {
-      "path": "app/services/backup_scheduler.py",
-      "sha256": "54471c4e30781c28047aa96fe381951f35fd0b4f748468b9b14a912e4ca0e09c",
-      "size_bytes": 18068
-    },
-    {
-      "path": "app/services/backup_service.py",
-      "sha256": "089f84a0b4b58f2a2e178e3742fec41c9ccbf5e5a306504093fe9b95cc28ac7e",
-      "size_bytes": 78478
-    },
-    {
-      "path": "app/services/backup_settings_service.py",
-      "sha256": "0cb574bd8893073dbb852925daeca05ccdfa7d7a4cbc3ea424cd04dac885fb6a",
-      "size_bytes": 8907
-    },
-    {
-      "path": "app/services/class_service.py",
-      "sha256": "9cb6523c8bedcd3d33db3857b8ca736d99c10099f5d34a4a87dd548dfc9c66ce",
-      "size_bytes": 36565
-    },
-    {
-      "path": "app/services/coming_session_capacity_report_service.py",
-      "sha256": "9e79652060fdddb506df32df34dcab3ae237f6ad4a020771c6d70563c9ff414b",
-      "size_bytes": 12823
-    },
-    {
-      "path": "app/services/coming_session_service.py",
-      "sha256": "7556ff5cf2e83e4c7d6b1aabcf986caa547c530f829cad1970d9907dc191c2c6",
-      "size_bytes": 30186
-    },
-    {
-      "path": "app/services/crash_reporter.py",
-      "sha256": "3bae272957be6af290f82de759b2797a47ef17fdcfd8728b100c57f951e8911d",
-      "size_bytes": 23576
-    },
-    {
-      "path": "app/services/expense_service.py",
-      "sha256": "986117a19c8db5c483a453812fb8c6c241d4047ec97b6b4c312cab18ef8f2419",
-      "size_bytes": 11319
-    },
-    {
-      "path": "app/services/fee_service.py",
-      "sha256": "0a13eff97b55968ddc996e165bf56030fd0b8dc2d14b1b759d349d74a342b044",
-      "size_bytes": 203456
-    },
-    {
-      "path": "app/services/income_service.py",
-      "sha256": "4f6d63164425ae968baa0e26a5d437919fbbdb9c41a66685830db93bcd10ec3b",
-      "size_bytes": 7057
-    },
-    {
-      "path": "app/services/license_service.py",
-      "sha256": "be4f54da44d39284ecc12325c78147098b30e3450dbd6c3b1144ed10054776c0",
-      "size_bytes": 25798
-    },
-    {
-      "path": "app/services/promotion_cycle_service.py",
-      "sha256": "4bd31b21b432a28807c493b3f8194e914f040d6b40297996c6901b09dfa95361",
-      "size_bytes": 9444
-    },
-    {
-      "path": "app/services/promotion_full_class_v2.py",
-      "sha256": "63fc719c2c33163e076f58d8c1ddcb7b3622d27fc14349744ce2112af268aea5",
-      "size_bytes": 72984
-    },
-    {
-      "path": "app/services/promotion_service.py",
-      "sha256": "9b37085ba6bffc889e67cf7b213431a6b107f63a90408f1cea8a4c555f9ca14c",
-      "size_bytes": 34689
-    },
-    {
-      "path": "app/services/real_time_finance_service.py",
-      "sha256": "cee26a14a833eb14a594d0b09f891e58d1b9cf58e45b596db1e3b7c7e56defde",
-      "size_bytes": 5041
-    },
-    {
-      "path": "app/services/receipt_filename_service.py",
-      "sha256": "369a25c60c9af22f2fbe6cbbac86371f880606fffedc9b90bb9741cac68e3f4d",
-      "size_bytes": 1532
-    },
-    {
-      "path": "app/services/sibling_fee_service.py",
-      "sha256": "28607fb83adac23b0e189e4bc1bf80ea53979fce3212315ce286fa9fae0a9771",
-      "size_bytes": 22545
-    },
-    {
-      "path": "app/services/single_instance_service.py",
-      "sha256": "1ea8513a48c8fe6b0196df366ccde5b63cd9ce955f1f464486596fb3f22c0ec6",
-      "size_bytes": 975
-    },
-    {
-      "path": "app/services/statistics_service.py",
-      "sha256": "c9e216cf159ccd8abfeb99d2e9e10f7e1b13f9ae39f83d4ba6cfff0b30114690",
-      "size_bytes": 4411
-    },
-    {
-      "path": "app/services/student_service.py",
-      "sha256": "b451165da7e793e693bf29ba55c96d28ee6385cef6c86088d3c57de6baa92954",
-      "size_bytes": 124553
-    },
-    {
-      "path": "app/styles.qss",
-      "sha256": "ef979401142590a01481a56ee8560f813ab61fed7d1b9f7f68df0e1e9de5b396",
-      "size_bytes": 2170
-    },
-    {
-      "path": "app/ui_shell.py",
-      "sha256": "a7dacead0ddda03cecca4be09128af7f7b743db48e5a37b75d9df63c24117c60",
-      "size_bytes": 18239
-    },
-    {
-      "path": "app/ui_tables.py",
-      "sha256": "fea6479c38f3e3ed6ae398ea36e74bd9e0e979c1d3335b46474dd94d3a1fd9a1",
-      "size_bytes": 3670
-    },
-    {
-      "path": "app/ui_theme.py",
-      "sha256": "da186c8b4013efc61dad802ee481ca0b5b8283c5ac9c05258eabfc11df7a02a5",
-      "size_bytes": 16139
-    },
-    {
-      "path": "app/widgets/__init__.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "size_bytes": 0
-    },
-    {
-      "path": "assets/images/hira_model_school_logo.png",
-      "sha256": "b7af0b1ef80c7e12dcb8ef689ff46dc97de84dac029b2f2a3e8b0acae3b0d167",
-      "size_bytes": 476188
-    },
-    {
-      "path": "assets/images/hira_model_school_print_logo.png",
-      "sha256": "436fbbccb6831134a473bcc7246bfffbb3afe455010c67f93ccb75f4001d3222",
-      "size_bytes": 585326
-    },
-    {
-      "path": "docs/FIXES_3_TO_8_REPORT.md",
-      "sha256": "a765dd0e943d0d021b3f088d0eba2e0f0987e91f5d6e399a9d0516c624b904fb",
-      "size_bytes": 3354
-    },
-    {
-      "path": "docs/REGRESSION_TESTS.md",
-      "sha256": "a9c5d05845023bcbb61cfe529e948b6df8860e9298d06993e471fa14dd99c9b7",
-      "size_bytes": 1491
-    },
-    {
-      "path": "HiraModelSchool.spec",
-      "sha256": "9c5a1e54aa2008cdca84589910e62f116f249199e5d57adad946c0a8c816870f",
-      "size_bytes": 1452
-    },
-    {
-      "path": "installer/HiraModelSchoolInstaller.iss",
-      "sha256": "ba343fdd7bd2c649be1950ad36ac2d5fdbd1b3e210d4f122376ceaa4ab4c94f1",
-      "size_bytes": 2200
-    },
-    {
-      "path": "requirements.txt",
-      "sha256": "80633ec66e68e949772626ea5cb6eeeeaa5956bc5402c6f340e7ae5f5b5db574",
-      "size_bytes": 324
-    },
-    {
-      "path": "run.py",
-      "sha256": "a2d7a739d5221061b3f35ff68378852c5cda7576dd1d6c21adb09464069572a7",
-      "size_bytes": 14194
-    },
-    {
-      "path": "tests/__init__.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "size_bytes": 0
-    },
-    {
-      "path": "tests/integration/__init__.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "size_bytes": 0
-    },
-    {
-      "path": "tests/integration/test_backup_management_ui_integration.py",
-      "sha256": "d968d47b7ed7086893d39e42bd3b105c84696ed0328f598895ca1b652fddcd0d",
-      "size_bytes": 1423
-    },
-    {
-      "path": "tests/integration/test_encrypted_backup_integration.py",
-      "sha256": "f9f7765dbb400a6aaf30874a3abd48e6d56c84827921c214c8f7967b1de0212d",
-      "size_bytes": 3091
-    },
-    {
-      "path": "tests/integration/test_promotion_ui_integration.py",
-      "sha256": "25bd37d73230d45607409508384192d3bd28d3ba0af3b2f21426706f92794d51",
-      "size_bytes": 1219
-    },
-    {
-      "path": "tests/integration/test_restore_atomicity_integration.py",
-      "sha256": "fdc63285c45aff2392d38d2f060517aa8d3e36bcb10f243bfbbdf5a28ff3145a",
-      "size_bytes": 4167
-    },
-    {
-      "path": "tests/regression/__init__.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "size_bytes": 0
-    },
-    {
-      "path": "tests/regression/support.py",
-      "sha256": "1d3ffc7ae22357b0beb75fb5fcf18513e4715c0661cffdf985338b792993cc34",
-      "size_bytes": 9811
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v10_scope.py",
-      "sha256": "3bed259d80f1b514e1f347e3501a606908711097fdfa67a10d559f92d2c7064d",
-      "size_bytes": 19989
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v11_scope.py",
-      "sha256": "09a5c1729f859b4a1a473a34a03c5b9536da698a3bc63013bb7e3a8bc5979488",
-      "size_bytes": 18023
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v12_scope.py",
-      "sha256": "e0e47a3f9517c07a17e96156da5611161fcd6b8dbaaeba760c4362ee507b9085",
-      "size_bytes": 17326
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v13_scope.py",
-      "sha256": "1e3bfddaed9c9279cdeaaa7b0355556ca2f038d29e2667a4bc29ada7da1a1225",
-      "size_bytes": 20281
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v14_scope.py",
-      "sha256": "0bd4f29fa2fcd71cd1857deabc769ae0e0c4917c7043cd2208cf919757d8b352",
-      "size_bytes": 21857
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v15_scope.py",
-      "sha256": "538e3d9fcec963ac6887ad00b9319e7fa300991fa8341fa739451150466927ba",
-      "size_bytes": 19535
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v16_scope.py",
-      "sha256": "5c572a5e4a098dcb70ad078443139cb7502f975ae6a0938cd76260bf47f093b1",
-      "size_bytes": 24125
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v17_scope.py",
-      "sha256": "68e14aa61701e157500374bc4c55e18829007464a78e34dd81bf2593f378c830",
-      "size_bytes": 28881
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v18_scope.py",
-      "sha256": "662a9f8b3ffdfdbb9033c8284f5032af97cbdcfd4625e6b05c6940ffd8a23106",
-      "size_bytes": 35188
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v19_scope.py",
-      "sha256": "f254b86c15df0660dd2349bd8219ba50838829c6c28db988dc9e2c30bb63e84b",
-      "size_bytes": 30246
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v20_scope.py",
-      "sha256": "c84e26e7be09bdcee38165d7f873e889e250363a6afdc5af4415abf51a575fc9",
-      "size_bytes": 14860
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v21_scope.py",
-      "sha256": "389d3527aaa28e4e70f1d1c730f66a8e456f32bfb70038ba38e8fe744020bf41",
-      "size_bytes": 5807
-    },
-    {
-      "path": "tests/regression/test_additional_bugfix_v9_scope.py",
-      "sha256": "e110e7a5fd28dc866fc6a1ab77076d7026f5ee8b1be45ff8d60f94f4c3eb9461",
-      "size_bytes": 19092
-    },
-    {
-      "path": "tests/regression/test_additional_startup_hardening_same_version.py",
-      "sha256": "8ec182dffa76b6fd21b35947dd2dcec7c6fcc8ee8b0e1a03a211f7af5841fb35",
-      "size_bytes": 15435
-    },
-    {
-      "path": "tests/regression/test_april_startup_archive_recovery_v24.py",
-      "sha256": "5491fc7ae4c5de7401386a3461af958641e855277fbba5d15db917a4e33a6ad7",
-      "size_bytes": 7479
-    },
-    {
-      "path": "tests/regression/test_backup_restore_regressions.py",
-      "sha256": "cec1667cac29cce1b9236f0ce39dcde34a9ff2bd3ec4e9dfa8c394d36fda3feb",
-      "size_bytes": 6240
-    },
-    {
-      "path": "tests/regression/test_cancel_repay_schema_integrity_regression.py",
-      "sha256": "83de567f228407aefa45aa55581e0f33a6a897278263b1d287484ffc950564a1",
-      "size_bytes": 8152
-    },
-    {
-      "path": "tests/regression/test_class10_fee_horizon_regressions.py",
-      "sha256": "e7f70d603d72af0502fc846208d20517a91cd20f120e201e030a19da4147ab46",
-      "size_bytes": 9790
-    },
-    {
-      "path": "tests/regression/test_coming_session_admission_v22.py",
-      "sha256": "33632ccf925cb4750453a50d50a4b71757bbea64d79361b0840dfd2895b0e9f4",
-      "size_bytes": 28310
-    },
-    {
-      "path": "tests/regression/test_coming_session_capacity_report_same_v31.py",
-      "sha256": "fe64688b199b52ebca921320f94be08763b8e04a4a0f1e7923a74b4fd3751541",
-      "size_bytes": 9870
-    },
-    {
-      "path": "tests/regression/test_coming_session_capacity_simple_editor_same_v31.py",
-      "sha256": "75bfe463b2041adfffc0ff83900d0e84dc1f804fdb37a8afdbe971859dea7bc9",
-      "size_bytes": 1524
-    },
-    {
-      "path": "tests/regression/test_consolidated_bugfix_scope.py",
-      "sha256": "fffe35b93c6535b8a83804317a980170c65e5ef118c778208959da292c8ad0ab",
-      "size_bytes": 30868
-    },
-    {
-      "path": "tests/regression/test_database_migrations.py",
-      "sha256": "398c6fe9e5faeff8477f6575b43097d7e9c35f3771813c079862fd87eb19510d",
-      "size_bytes": 15149
-    },
-    {
-      "path": "tests/regression/test_deep_startup_migration_locale_hardening_same_v31.py",
-      "sha256": "22d2ad9ad8b2fbaf8432cc3fe699d9d5cd9b800fbc384358d4dc46b633491456",
-      "size_bytes": 11865
-    },
-    {
-      "path": "tests/regression/test_deeper_startup_clock_and_sequence_hardening_same_v31.py",
-      "sha256": "6f98b92c407b7bffe5d7ecc70aba7455d8408f1ba7f5cc3919e242e2f7039f1b",
-      "size_bytes": 10765
-    },
-    {
-      "path": "tests/regression/test_deployment_readiness_hardening_same_v31.py",
-      "sha256": "d08326af243b6f19b9418c92914ab4930326d9991d8986727cea84f2dafdae5c",
-      "size_bytes": 12956
-    },
-    {
-      "path": "tests/regression/test_deployment_second_pass_hardening_same_v31.py",
-      "sha256": "fd0757362f4f46facb4084e0d0bd16ce1999cfa3b16517691f81b56478fed601",
-      "size_bytes": 4824
-    },
-    {
-      "path": "tests/regression/test_deployment_third_pass_technical_hardening_same_v31.py",
-      "sha256": "bf329f050bebdd90db1a75b30f490e6294db534389a1fd68ff470b84048aa223",
-      "size_bytes": 11818
-    },
-    {
-      "path": "tests/regression/test_expense_search_clean_layout_same_v31.py",
-      "sha256": "352bedc930d50b9f81761944f4136f7e70531452158d3f3c79e4ad84f833a871",
-      "size_bytes": 2226
-    },
-    {
-      "path": "tests/regression/test_fee_regressions.py",
-      "sha256": "1c46cc7fe5649a0416ec198534c97af5a71aeacf026cd13a20305d1e4399cc9c",
-      "size_bytes": 7052
-    },
-    {
-      "path": "tests/regression/test_financial_clock_rollback_v31.py",
-      "sha256": "9e470247a24372fb7f3d19900b246a0951a94842ee65fb6d5a7524ce5a882b4d",
-      "size_bytes": 6649
-    },
-    {
-      "path": "tests/regression/test_full_academic_year_end_to_end_v22.py",
-      "sha256": "e70b9fed49584230dbedd7a34d3031f9f889b5a55466e1454a2b22b0cb21d553",
-      "size_bytes": 30867
-    },
-    {
-      "path": "tests/regression/test_full_school_fee_print_download_v29.py",
-      "sha256": "8dee3430bd580db4e985324140858163f953c4094182e6c180d7243e098a99cb",
-      "size_bytes": 5437
-    },
-    {
-      "path": "tests/regression/test_further_technical_integrity_restore_backup_same_v31.py",
-      "sha256": "48f1986d798bf39e6c10ac0ed78dec930f42cb82afaf4bb48edbe0b77cdb5820",
-      "size_bytes": 22172
-    },
-    {
-      "path": "tests/regression/test_individual_fee_reapplication_v27.py",
-      "sha256": "2f5db0149f5c0969845a145ab63febea9841385568b270df14730f7ef1730a7f",
-      "size_bytes": 7592
-    },
-    {
-      "path": "tests/regression/test_legacy_class_is_active_migration_order_same_v31.py",
-      "sha256": "81ec032b0d3b4ef04e4e504fc6948054bb60d3460a4e54d8cfe6a0a0de685803",
-      "size_bytes": 4759
-    },
-    {
-      "path": "tests/regression/test_month_range_unpaid_fee_report_same_v31.py",
-      "sha256": "2c23a02fb5fdc8f86f63fa79bc7afb4ddfda8ad8323205fb5be2fb5ac3b361a5",
-      "size_bytes": 16590
-    },
-    {
-      "path": "tests/regression/test_more_startup_migration_technical_hardening_same_v31.py",
-      "sha256": "17bee03389e4b74193affbbe4f107483fc33729086450fd5e533c062564cea78",
-      "size_bytes": 20669
-    },
-    {
-      "path": "tests/regression/test_overdue_promotion_recovery_v23.py",
-      "sha256": "0f60a7991abbd636ad4acc9f260e406602b69a154187b2ccdc1a82842abe5de9",
-      "size_bytes": 30507
-    },
-    {
-      "path": "tests/regression/test_pay_fee_search_receipt_routing_same_v31.py",
-      "sha256": "cffedca322b1242e4b0247a1cc334e8997b4b4f35a76561072542871c944a727",
-      "size_bytes": 2320
-    },
-    {
-      "path": "tests/regression/test_payment_cancellation_regressions.py",
-      "sha256": "ff977140c8c502b8c355db2ec4d092482a14ea6e10b76093cfd5170b335edeb6",
-      "size_bytes": 10597
-    },
-    {
-      "path": "tests/regression/test_positive_full_class_fee_v26.py",
-      "sha256": "e562502fcf4ee512d4f5adcc58398f28355aeba4e9c50b343316d0aa0e0c3b68",
-      "size_bytes": 6818
-    },
-    {
-      "path": "tests/regression/test_positive_roll_generation_regressions.py",
-      "sha256": "ab75af4f8106515f1c1962b5baf7f5b96e9850bcc5a61f784fb3546d799b4bb6",
-      "size_bytes": 5391
-    },
-    {
-      "path": "tests/regression/test_promotion_regressions.py",
-      "sha256": "3ec2f85205976ec3d584b92e3f178402b1901a68bfba60695419be172c5dcb7b",
-      "size_bytes": 5603
-    },
-    {
-      "path": "tests/regression/test_roll_lifecycle_regressions.py",
-      "sha256": "6b023426e1f87be87cf9dbecf567fc621b694e39925f093e4634c6aa00946e2f",
-      "size_bytes": 14522
-    },
-    {
-      "path": "tests/regression/test_sibling_event_month_regressions.py",
-      "sha256": "ae88ee36490d894ea0c99fe7b083f17416ef1cf5e2a34300a50c280a49494778",
-      "size_bytes": 15668
-    },
-    {
-      "path": "tests/regression/test_sibling_setting_history_startup_v30.py",
-      "sha256": "513617be23bf0bc486a0d7580afe048c80b017fa9378bc29d5c104c099519355",
-      "size_bytes": 5101
-    },
-    {
-      "path": "tests/regression/test_startup_data_initialization_false_positives.py",
-      "sha256": "5afe7a32246f0dae5f4173df10cb0bc0141bbe7558de84f79f6208450e234be2",
-      "size_bytes": 14439
-    },
-    {
-      "path": "tests/regression/test_statistics_module.py",
-      "sha256": "77061831e6b2e45cd46be5151d296a52f0bc592f5e509b35d121f2d28a20ddf3",
-      "size_bytes": 7734
-    },
-    {
-      "path": "tests/regression/test_student_status_regressions.py",
-      "sha256": "885c8b381ace55d76006bebbf238ab5a9c13620ad51c4c1841990fd3627e2c38",
-      "size_bytes": 6138
-    },
-    {
-      "path": "tests/regression/test_system_clock_admission_date_v25.py",
-      "sha256": "63ae97369c5aeda1e5295efc717f6079ead204fa4b9a5e7d60fecec6244ea369",
-      "size_bytes": 5717
-    },
-    {
-      "path": "tests/regression/test_ui_safety_regressions_v22.py",
-      "sha256": "53b2d820f336d2a0ae861c64c6e1f9fbfb51fcc8979869f78368333dda61626b",
-      "size_bytes": 10606
-    },
-    {
-      "path": "tests/regression/test_whole_school_single_page_print_v28.py",
-      "sha256": "efc2ef606e089ac256ada570256ddcbe3fc37df6b675d85d0c7bbdd4f5d47f20",
-      "size_bytes": 3442
-    },
-    {
-      "path": "tests/unit/__init__.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "size_bytes": 0
-    },
-    {
-      "path": "tests/unit/test_backup_crypto_unit.py",
-      "sha256": "7516362a636884d6552a45cd551f2b57d4a91cd69fc4c0e57741ddb9471db4f4",
-      "size_bytes": 6289
-    },
-    {
-      "path": "tests/unit/test_backup_settings_and_repository_unit.py",
-      "sha256": "b442ff97afc942415d954d0fb8bd76a566814a0f26d2e7c3dc69907a3dc8fe0f",
-      "size_bytes": 4689
-    },
-    {
-      "path": "tools/deployment_preflight.py",
-      "sha256": "e309a15be229a6868704e26eef8ea1d41ebff3799cc783362db64ad236e98143",
-      "size_bytes": 7708
-    },
-    {
-      "path": "tools/run_all_tests.py",
-      "sha256": "0c2ad6d55980db870e7d0f8f6bdd362fd68a733b16e03e7af486fd63084fb9ea",
-      "size_bytes": 842
-    },
-    {
-      "path": "tools/run_regression_tests.py",
-      "sha256": "ad364bbc4427776a887dbaf568ab909ff163b53e5a8aa13589bd2b9356852a67",
-      "size_bytes": 685
-    }
-  ],
-  "installer_included": false,
-  "installer_rebuilt": false,
-  "package_format_version": 2,
-  "source_root": "SchoolManagementSystem",
-  "total_size_bytes": 3872389,
-  "clean_deployment": {
-    "bundled_database": false,
-    "bundled_school_records": false,
-    "first_run_database_creation": true,
-    "database_schema_version": 23,
-    "application_version": "1.1.0"
-  }
+    "application_name":  "Hira Model School",
+    "application_version":  "1.1.0",
+    "patch":  "V31 Secure Offline Customer Licence Separation",
+    "change_summary":  [
+                           "Removes the private licence generator and encrypted signing key from the customer application package.",
+                           "Adds a customer request-code and signed .lic import workflow.",
+                           "Adds a separate owner-only licence generator build and packaging isolation regression tests."
+                       ],
+    "generated_at_utc":  "2026-08-10T11:19:52.7877392Z",
+    "file_count":  140,
+    "files":  [
+                  {
+                      "path":  "app/__init__.py",
+                      "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "size_bytes":  0
+                  },
+                  {
+                      "path":  "app/assets/hira_model_school_icon.ico",
+                      "sha256":  "f0bf25dd6f2ce6d8757110e68b5de512b52e3b5f3094c47d6fa3e7f2034f050a",
+                      "size_bytes":  42686
+                  },
+                  {
+                      "path":  "app/assets/hira_model_school_icon.png",
+                      "sha256":  "bee62665af8bd321986ab3efc9568d82bdd5884749599c3e3a5fe3553834c795",
+                      "size_bytes":  13752
+                  },
+                  {
+                      "path":  "app/auth_dialogs.py",
+                      "sha256":  "881a8af571c50a2dfee27854cf726f135fa5072333499a6e7b5bdec25bf9dda0",
+                      "size_bytes":  23553
+                  },
+                  {
+                      "path":  "app/config.py",
+                      "sha256":  "50654e6c61c06a922977aacab6a3c5de72611d2b9ea5bb3805dd04b8f87e6afe",
+                      "size_bytes":  7758
+                  },
+                  {
+                      "path":  "app/database.py",
+                      "sha256":  "5c4bf4e298c87d5be45f94fce126cec5e1d58f49c368bf8b2af337101228f105",
+                      "size_bytes":  135880
+                  },
+                  {
+                      "path":  "app/licence_generator/__init__.py",
+                      "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "size_bytes":  0
+                  },
+                  {
+                      "path":  "app/licence_generator/activation_password_dialog.py",
+                      "sha256":  "6c757c19768076ef4a3ae407e8d2c598a977c974f6928771a611832ac0cb062a",
+                      "size_bytes":  6207
+                  },
+                  {
+                      "path":  "app/licence_generator/encrypted_signing_key.json",
+                      "sha256":  "43c1b4afb80719804e5fa29e9807abca8185add11337a54343c9afdd63c1fe9a",
+                      "size_bytes":  597
+                  },
+                  {
+                      "path":  "app/licence_generator/licence_generator_dialog.py",
+                      "sha256":  "6078386229d559f94eec89f9a50301084f850daca7dbea9e71414ae0e6119a04",
+                      "size_bytes":  22217
+                  },
+                  {
+                      "path":  "app/licence_generator/licence_security.py",
+                      "sha256":  "38c619dd468ed7103921b5b1e30209ac688933da70627d71fa6f42b1c681a978",
+                      "size_bytes":  7843
+                  },
+                  {
+                      "path":  "app/license_activation_dialog.py",
+                      "sha256":  "aa4d4a1abfbba115fb7acd72ca867a9a99d247bba503f20a2425a5c5403b6af9",
+                      "size_bytes":  3685
+                  },
+                  {
+                      "path":  "app/license_public_key.pem",
+                      "sha256":  "d945c857b79aca3b4c8357933c22919d2bb9476539cd92b4ba16e2c15dbea740",
+                      "size_bytes":  113
+                  },
+                  {
+                      "path":  "app/main_window.py",
+                      "sha256":  "94a4a69bb90dd4c5838655be528b2cb0ecc3f1d7f157c5b542a6842f22b8aafc",
+                      "size_bytes":  27343
+                  },
+                  {
+                      "path":  "app/modules/__init__.py",
+                      "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "size_bytes":  0
+                  },
+                  {
+                      "path":  "app/modules/backup_management.py",
+                      "sha256":  "62c752a69967bddb76d03c09c58f9cd046802d1f2c77ccef096c30bc890a3710",
+                      "size_bytes":  45230
+                  },
+                  {
+                      "path":  "app/modules/class_fee_status.py",
+                      "sha256":  "2ff2c1b2b7c62f4c8ce3f7e27691c5efbb4b7137776670d1a6b59c919338e839",
+                      "size_bytes":  11782
+                  },
+                  {
+                      "path":  "app/modules/class_management.py",
+                      "sha256":  "d1c0866c18e2a26c76e866e792f87afac8ebddf31559bad8499fa4a77b4f9d02",
+                      "size_bytes":  41699
+                  },
+                  {
+                      "path":  "app/modules/coming_session_capacity_report.py",
+                      "sha256":  "ac9f25a6f43b3b9bd4960cd1ba697c962026c125f83d224b05122796663e753c",
+                      "size_bytes":  23886
+                  },
+                  {
+                      "path":  "app/modules/expense_management.py",
+                      "sha256":  "9a1583cbcef0ba830f946a805b00c8f342670959e46b2e1561b83cc9276487b4",
+                      "size_bytes":  11296
+                  },
+                  {
+                      "path":  "app/modules/fee_management.py",
+                      "sha256":  "5264461a2b615ef1546d165609223a42a0b3aae1d35ae8931e1d9bb0a025e86b",
+                      "size_bytes":  71711
+                  },
+                  {
+                      "path":  "app/modules/fee_receipt.py",
+                      "sha256":  "a2e94d342f187dc4a94818c89e8b4e6ba17d189196a2b75b285cdb0f2399748a",
+                      "size_bytes":  53810
+                  },
+                  {
+                      "path":  "app/modules/full_school_fee_list.py",
+                      "sha256":  "924e575cef72d381844c5972237a62260c428eabf0e3d15703e234ab66315469",
+                      "size_bytes":  32847
+                  },
+                  {
+                      "path":  "app/modules/income_management.py",
+                      "sha256":  "3cc7cb74fd68612211cbbaa4f29488a8de29b015a946e6076e84090e471e8e2b",
+                      "size_bytes":  32823
+                  },
+                  {
+                      "path":  "app/modules/month_range_fee_report.py",
+                      "sha256":  "50a6da2d17f0a6bbc4b95dbbb1d3465c9ece3199d0271dfa577fffe6b2ea6a9d",
+                      "size_bytes":  32210
+                  },
+                  {
+                      "path":  "app/modules/pay_fee.py",
+                      "sha256":  "11b689d5c7adb5f64ddde1ad2b2fbe0c52a553cbae885f398101130a04c4f32d",
+                      "size_bytes":  54391
+                  },
+                  {
+                      "path":  "app/modules/promotion_management.py",
+                      "sha256":  "95137419442720a4367977beb84a9664a1529bc70beae407c73a395e8746694b",
+                      "size_bytes":  20775
+                  },
+                  {
+                      "path":  "app/modules/real_time_finance.py",
+                      "sha256":  "39b4f17d97aabe12ce703aee52d95d196cf06c9307e6f37673160612852de6f9",
+                      "size_bytes":  42139
+                  },
+                  {
+                      "path":  "app/modules/search_expense.py",
+                      "sha256":  "fd5e13e47eee7f2c83160ba9817093b1b101b483b155efb6235a1ea097ee0a69",
+                      "size_bytes":  36337
+                  },
+                  {
+                      "path":  "app/modules/statistics_management.py",
+                      "sha256":  "b74fbc804d5087448eeb99c8679196aaaf4f3f4460f159d33eb50a5f57cb472b",
+                      "size_bytes":  14938
+                  },
+                  {
+                      "path":  "app/modules/student_management.py",
+                      "sha256":  "601df8398c24dab01bb0f7184093afea93aef2262dd22cdceadeadb7a1476391",
+                      "size_bytes":  231040
+                  },
+                  {
+                      "path":  "app/navigation.py",
+                      "sha256":  "1652e6896b17d8e25129b3484ecbdf71d75ee16c59fde93006c2be6df3e243f2",
+                      "size_bytes":  2469
+                  },
+                  {
+                      "path":  "app/normalization.py",
+                      "sha256":  "94cff66ca5a568992e33f9d71d8c0e45d17577fccde386ec22ad263aec49113a",
+                      "size_bytes":  2449
+                  },
+                  {
+                      "path":  "app/schema_integrity.py",
+                      "sha256":  "1f3c4e000ad9ef98338078a00301dd6b59fd2b38f349e9fe90b5b63c7c13b897",
+                      "size_bytes":  138573
+                  },
+                  {
+                      "path":  "app/services/__init__.py",
+                      "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "size_bytes":  0
+                  },
+                  {
+                      "path":  "app/services/auth_service.py",
+                      "sha256":  "a20fb2a01941eef93cb5979ba62fd4e540ae4725903bf69feb065a9b32b45353",
+                      "size_bytes":  13718
+                  },
+                  {
+                      "path":  "app/services/backup_crypto_service.py",
+                      "sha256":  "b7b891c752d824b1fe9c4e04e7941b8c4a6cd84cfa5132963dcb7073a94e83cd",
+                      "size_bytes":  53151
+                  },
+                  {
+                      "path":  "app/services/backup_scheduler.py",
+                      "sha256":  "54471c4e30781c28047aa96fe381951f35fd0b4f748468b9b14a912e4ca0e09c",
+                      "size_bytes":  18068
+                  },
+                  {
+                      "path":  "app/services/backup_service.py",
+                      "sha256":  "089f84a0b4b58f2a2e178e3742fec41c9ccbf5e5a306504093fe9b95cc28ac7e",
+                      "size_bytes":  78478
+                  },
+                  {
+                      "path":  "app/services/backup_settings_service.py",
+                      "sha256":  "0cb574bd8893073dbb852925daeca05ccdfa7d7a4cbc3ea424cd04dac885fb6a",
+                      "size_bytes":  8907
+                  },
+                  {
+                      "path":  "app/services/class_service.py",
+                      "sha256":  "9cb6523c8bedcd3d33db3857b8ca736d99c10099f5d34a4a87dd548dfc9c66ce",
+                      "size_bytes":  36565
+                  },
+                  {
+                      "path":  "app/services/coming_session_capacity_report_service.py",
+                      "sha256":  "9e79652060fdddb506df32df34dcab3ae237f6ad4a020771c6d70563c9ff414b",
+                      "size_bytes":  12823
+                  },
+                  {
+                      "path":  "app/services/coming_session_service.py",
+                      "sha256":  "7556ff5cf2e83e4c7d6b1aabcf986caa547c530f829cad1970d9907dc191c2c6",
+                      "size_bytes":  30186
+                  },
+                  {
+                      "path":  "app/services/crash_reporter.py",
+                      "sha256":  "3bae272957be6af290f82de759b2797a47ef17fdcfd8728b100c57f951e8911d",
+                      "size_bytes":  23576
+                  },
+                  {
+                      "path":  "app/services/expense_service.py",
+                      "sha256":  "986117a19c8db5c483a453812fb8c6c241d4047ec97b6b4c312cab18ef8f2419",
+                      "size_bytes":  11319
+                  },
+                  {
+                      "path":  "app/services/fee_service.py",
+                      "sha256":  "49fd573d4da9d0aea9dd4d7a77dfef2229feb100d0027ef5c769995a65b5affe",
+                      "size_bytes":  210607
+                  },
+                  {
+                      "path":  "app/services/income_service.py",
+                      "sha256":  "4f6d63164425ae968baa0e26a5d437919fbbdb9c41a66685830db93bcd10ec3b",
+                      "size_bytes":  7057
+                  },
+                  {
+                      "path":  "app/services/license_service.py",
+                      "sha256":  "66d1e586d376197f00324207de8617f8e2e30a0edf7392b51ad392746405798b",
+                      "size_bytes":  26968
+                  },
+                  {
+                      "path":  "app/services/promotion_cycle_service.py",
+                      "sha256":  "4bd31b21b432a28807c493b3f8194e914f040d6b40297996c6901b09dfa95361",
+                      "size_bytes":  9444
+                  },
+                  {
+                      "path":  "app/services/promotion_full_class_v2.py",
+                      "sha256":  "63fc719c2c33163e076f58d8c1ddcb7b3622d27fc14349744ce2112af268aea5",
+                      "size_bytes":  72984
+                  },
+                  {
+                      "path":  "app/services/promotion_service.py",
+                      "sha256":  "9b37085ba6bffc889e67cf7b213431a6b107f63a90408f1cea8a4c555f9ca14c",
+                      "size_bytes":  34689
+                  },
+                  {
+                      "path":  "app/services/real_time_finance_service.py",
+                      "sha256":  "cee26a14a833eb14a594d0b09f891e58d1b9cf58e45b596db1e3b7c7e56defde",
+                      "size_bytes":  5041
+                  },
+                  {
+                      "path":  "app/services/receipt_filename_service.py",
+                      "sha256":  "369a25c60c9af22f2fbe6cbbac86371f880606fffedc9b90bb9741cac68e3f4d",
+                      "size_bytes":  1532
+                  },
+                  {
+                      "path":  "app/services/sibling_fee_service.py",
+                      "sha256":  "28607fb83adac23b0e189e4bc1bf80ea53979fce3212315ce286fa9fae0a9771",
+                      "size_bytes":  22545
+                  },
+                  {
+                      "path":  "app/services/single_instance_service.py",
+                      "sha256":  "1ea8513a48c8fe6b0196df366ccde5b63cd9ce955f1f464486596fb3f22c0ec6",
+                      "size_bytes":  975
+                  },
+                  {
+                      "path":  "app/services/statistics_service.py",
+                      "sha256":  "c9e216cf159ccd8abfeb99d2e9e10f7e1b13f9ae39f83d4ba6cfff0b30114690",
+                      "size_bytes":  4411
+                  },
+                  {
+                      "path":  "app/services/student_service.py",
+                      "sha256":  "dd131c6b9d668df6a95806469cbe99ab347bda27862f6c140d3e87a691caef27",
+                      "size_bytes":  128476
+                  },
+                  {
+                      "path":  "app/styles.qss",
+                      "sha256":  "ef979401142590a01481a56ee8560f813ab61fed7d1b9f7f68df0e1e9de5b396",
+                      "size_bytes":  2170
+                  },
+                  {
+                      "path":  "app/ui_shell.py",
+                      "sha256":  "a7dacead0ddda03cecca4be09128af7f7b743db48e5a37b75d9df63c24117c60",
+                      "size_bytes":  18239
+                  },
+                  {
+                      "path":  "app/ui_tables.py",
+                      "sha256":  "fea6479c38f3e3ed6ae398ea36e74bd9e0e979c1d3335b46474dd94d3a1fd9a1",
+                      "size_bytes":  3670
+                  },
+                  {
+                      "path":  "app/ui_theme.py",
+                      "sha256":  "da186c8b4013efc61dad802ee481ca0b5b8283c5ac9c05258eabfc11df7a02a5",
+                      "size_bytes":  16139
+                  },
+                  {
+                      "path":  "app/widgets/__init__.py",
+                      "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "size_bytes":  0
+                  },
+                  {
+                      "path":  "assets/images/hira_model_school_logo.png",
+                      "sha256":  "b7af0b1ef80c7e12dcb8ef689ff46dc97de84dac029b2f2a3e8b0acae3b0d167",
+                      "size_bytes":  476188
+                  },
+                  {
+                      "path":  "assets/images/hira_model_school_print_logo.png",
+                      "sha256":  "436fbbccb6831134a473bcc7246bfffbb3afe455010c67f93ccb75f4001d3222",
+                      "size_bytes":  585326
+                  },
+                  {
+                      "path":  "docs/FIXES_3_TO_8_REPORT.md",
+                      "sha256":  "a765dd0e943d0d021b3f088d0eba2e0f0987e91f5d6e399a9d0516c624b904fb",
+                      "size_bytes":  3354
+                  },
+                  {
+                      "path":  "docs/REGRESSION_TESTS.md",
+                      "sha256":  "a9c5d05845023bcbb61cfe529e948b6df8860e9298d06993e471fa14dd99c9b7",
+                      "size_bytes":  1491
+                  },
+                  {
+                      "path":  "HiraModelSchool.spec",
+                      "sha256":  "c1a777da1f9ba270361de671591f3006a530dad95f53cfcfea6293441f9b0332",
+                      "size_bytes":  1350
+                  },
+                  {
+                      "path":  "HiraModelSchoolLicenseGenerator.spec",
+                      "sha256":  "7064aec236a9fe418ff5359f9799f92aadb5855c59d77bce906696063b81ea9b",
+                      "size_bytes":  1068
+                  },
+                  {
+                      "path":  "installer/HiraModelSchoolInstaller.iss",
+                      "sha256":  "ba343fdd7bd2c649be1950ad36ac2d5fdbd1b3e210d4f122376ceaa4ab4c94f1",
+                      "size_bytes":  2200
+                  },
+                  {
+                      "path":  "owner_license_generator.py",
+                      "sha256":  "fcd043be7fba3fc5d694b330a8a9dc390221190d3cef4dad2608a64072f3a454",
+                      "size_bytes":  1534
+                  },
+                  {
+                      "path":  "requirements.txt",
+                      "sha256":  "80633ec66e68e949772626ea5cb6eeeeaa5956bc5402c6f340e7ae5f5b5db574",
+                      "size_bytes":  324
+                  },
+                  {
+                      "path":  "run.py",
+                      "sha256":  "322d067ea1b45aea3be0c877cb3910c4184293b313709478a686eb719df6d2b6",
+                      "size_bytes":  12925
+                  },
+                  {
+                      "path":  "tests/__init__.py",
+                      "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "size_bytes":  0
+                  },
+                  {
+                      "path":  "tests/integration/__init__.py",
+                      "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "size_bytes":  0
+                  },
+                  {
+                      "path":  "tests/integration/test_backup_management_ui_integration.py",
+                      "sha256":  "d968d47b7ed7086893d39e42bd3b105c84696ed0328f598895ca1b652fddcd0d",
+                      "size_bytes":  1423
+                  },
+                  {
+                      "path":  "tests/integration/test_encrypted_backup_integration.py",
+                      "sha256":  "f9f7765dbb400a6aaf30874a3abd48e6d56c84827921c214c8f7967b1de0212d",
+                      "size_bytes":  3091
+                  },
+                  {
+                      "path":  "tests/integration/test_promotion_ui_integration.py",
+                      "sha256":  "25bd37d73230d45607409508384192d3bd28d3ba0af3b2f21426706f92794d51",
+                      "size_bytes":  1219
+                  },
+                  {
+                      "path":  "tests/integration/test_restore_atomicity_integration.py",
+                      "sha256":  "fdc63285c45aff2392d38d2f060517aa8d3e36bcb10f243bfbbdf5a28ff3145a",
+                      "size_bytes":  4167
+                  },
+                  {
+                      "path":  "tests/regression/__init__.py",
+                      "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "size_bytes":  0
+                  },
+                  {
+                      "path":  "tests/regression/support.py",
+                      "sha256":  "1d3ffc7ae22357b0beb75fb5fcf18513e4715c0661cffdf985338b792993cc34",
+                      "size_bytes":  9811
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v10_scope.py",
+                      "sha256":  "3bed259d80f1b514e1f347e3501a606908711097fdfa67a10d559f92d2c7064d",
+                      "size_bytes":  19989
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v11_scope.py",
+                      "sha256":  "09a5c1729f859b4a1a473a34a03c5b9536da698a3bc63013bb7e3a8bc5979488",
+                      "size_bytes":  18023
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v12_scope.py",
+                      "sha256":  "e0e47a3f9517c07a17e96156da5611161fcd6b8dbaaeba760c4362ee507b9085",
+                      "size_bytes":  17326
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v13_scope.py",
+                      "sha256":  "84e7e502212bacdda3fbd0c72c217711262e908b4a054fdb7626ce07148d6518",
+                      "size_bytes":  20395
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v14_scope.py",
+                      "sha256":  "0bd4f29fa2fcd71cd1857deabc769ae0e0c4917c7043cd2208cf919757d8b352",
+                      "size_bytes":  21857
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v15_scope.py",
+                      "sha256":  "538e3d9fcec963ac6887ad00b9319e7fa300991fa8341fa739451150466927ba",
+                      "size_bytes":  19535
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v16_scope.py",
+                      "sha256":  "5c572a5e4a098dcb70ad078443139cb7502f975ae6a0938cd76260bf47f093b1",
+                      "size_bytes":  24125
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v17_scope.py",
+                      "sha256":  "68e14aa61701e157500374bc4c55e18829007464a78e34dd81bf2593f378c830",
+                      "size_bytes":  28881
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v18_scope.py",
+                      "sha256":  "662a9f8b3ffdfdbb9033c8284f5032af97cbdcfd4625e6b05c6940ffd8a23106",
+                      "size_bytes":  35188
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v19_scope.py",
+                      "sha256":  "f254b86c15df0660dd2349bd8219ba50838829c6c28db988dc9e2c30bb63e84b",
+                      "size_bytes":  30246
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v20_scope.py",
+                      "sha256":  "c84e26e7be09bdcee38165d7f873e889e250363a6afdc5af4415abf51a575fc9",
+                      "size_bytes":  14860
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v21_scope.py",
+                      "sha256":  "389d3527aaa28e4e70f1d1c730f66a8e456f32bfb70038ba38e8fe744020bf41",
+                      "size_bytes":  5807
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_bugfix_v9_scope.py",
+                      "sha256":  "e110e7a5fd28dc866fc6a1ab77076d7026f5ee8b1be45ff8d60f94f4c3eb9461",
+                      "size_bytes":  19092
+                  },
+                  {
+                      "path":  "tests/regression/test_additional_startup_hardening_same_version.py",
+                      "sha256":  "0933a122d9af147c77c41908f49675a26b86643d0f78aff5446c70948df83762",
+                      "size_bytes":  15700
+                  },
+                  {
+                      "path":  "tests/regression/test_april_startup_archive_recovery_v24.py",
+                      "sha256":  "5491fc7ae4c5de7401386a3461af958641e855277fbba5d15db917a4e33a6ad7",
+                      "size_bytes":  7479
+                  },
+                  {
+                      "path":  "tests/regression/test_backup_restore_regressions.py",
+                      "sha256":  "cec1667cac29cce1b9236f0ce39dcde34a9ff2bd3ec4e9dfa8c394d36fda3feb",
+                      "size_bytes":  6240
+                  },
+                  {
+                      "path":  "tests/regression/test_cancel_repay_schema_integrity_regression.py",
+                      "sha256":  "83de567f228407aefa45aa55581e0f33a6a897278263b1d287484ffc950564a1",
+                      "size_bytes":  8152
+                  },
+                  {
+                      "path":  "tests/regression/test_class10_fee_horizon_regressions.py",
+                      "sha256":  "e7f70d603d72af0502fc846208d20517a91cd20f120e201e030a19da4147ab46",
+                      "size_bytes":  9790
+                  },
+                  {
+                      "path":  "tests/regression/test_coming_session_admission_v22.py",
+                      "sha256":  "33632ccf925cb4750453a50d50a4b71757bbea64d79361b0840dfd2895b0e9f4",
+                      "size_bytes":  28310
+                  },
+                  {
+                      "path":  "tests/regression/test_coming_session_capacity_report_same_v31.py",
+                      "sha256":  "fe64688b199b52ebca921320f94be08763b8e04a4a0f1e7923a74b4fd3751541",
+                      "size_bytes":  9870
+                  },
+                  {
+                      "path":  "tests/regression/test_coming_session_capacity_simple_editor_same_v31.py",
+                      "sha256":  "75bfe463b2041adfffc0ff83900d0e84dc1f804fdb37a8afdbe971859dea7bc9",
+                      "size_bytes":  1524
+                  },
+                  {
+                      "path":  "tests/regression/test_consolidated_bugfix_scope.py",
+                      "sha256":  "c053e1802c4b740384719841796dc085f25200f4342169b77f798d50a8058e80",
+                      "size_bytes":  31000
+                  },
+                  {
+                      "path":  "tests/regression/test_database_migrations.py",
+                      "sha256":  "398c6fe9e5faeff8477f6575b43097d7e9c35f3771813c079862fd87eb19510d",
+                      "size_bytes":  15149
+                  },
+                  {
+                      "path":  "tests/regression/test_deep_startup_migration_locale_hardening_same_v31.py",
+                      "sha256":  "22d2ad9ad8b2fbaf8432cc3fe699d9d5cd9b800fbc384358d4dc46b633491456",
+                      "size_bytes":  11865
+                  },
+                  {
+                      "path":  "tests/regression/test_deeper_startup_clock_and_sequence_hardening_same_v31.py",
+                      "sha256":  "6f98b92c407b7bffe5d7ecc70aba7455d8408f1ba7f5cc3919e242e2f7039f1b",
+                      "size_bytes":  10765
+                  },
+                  {
+                      "path":  "tests/regression/test_deployment_readiness_hardening_same_v31.py",
+                      "sha256":  "d08326af243b6f19b9418c92914ab4930326d9991d8986727cea84f2dafdae5c",
+                      "size_bytes":  12956
+                  },
+                  {
+                      "path":  "tests/regression/test_deployment_second_pass_hardening_same_v31.py",
+                      "sha256":  "097a073c923860b42d4703f15b87563611ee4024894d530d04902d600b71f1ae",
+                      "size_bytes":  5119
+                  },
+                  {
+                      "path":  "tests/regression/test_deployment_third_pass_technical_hardening_same_v31.py",
+                      "sha256":  "716fbd8a6d9e7b677f5ad1d4ea1be14deefc79911ccb6545e450339ab326f020",
+                      "size_bytes":  11808
+                  },
+                  {
+                      "path":  "tests/regression/test_expense_search_clean_layout_same_v31.py",
+                      "sha256":  "352bedc930d50b9f81761944f4136f7e70531452158d3f3c79e4ad84f833a871",
+                      "size_bytes":  2226
+                  },
+                  {
+                      "path":  "tests/regression/test_fee_regressions.py",
+                      "sha256":  "1c46cc7fe5649a0416ec198534c97af5a71aeacf026cd13a20305d1e4399cc9c",
+                      "size_bytes":  7052
+                  },
+                  {
+                      "path":  "tests/regression/test_financial_clock_rollback_v31.py",
+                      "sha256":  "9e470247a24372fb7f3d19900b246a0951a94842ee65fb6d5a7524ce5a882b4d",
+                      "size_bytes":  6649
+                  },
+                  {
+                      "path":  "tests/regression/test_full_academic_year_end_to_end_v22.py",
+                      "sha256":  "e70b9fed49584230dbedd7a34d3031f9f889b5a55466e1454a2b22b0cb21d553",
+                      "size_bytes":  30867
+                  },
+                  {
+                      "path":  "tests/regression/test_full_school_fee_print_download_v29.py",
+                      "sha256":  "8dee3430bd580db4e985324140858163f953c4094182e6c180d7243e098a99cb",
+                      "size_bytes":  5437
+                  },
+                  {
+                      "path":  "tests/regression/test_further_technical_integrity_restore_backup_same_v31.py",
+                      "sha256":  "48f1986d798bf39e6c10ac0ed78dec930f42cb82afaf4bb48edbe0b77cdb5820",
+                      "size_bytes":  22172
+                  },
+                  {
+                      "path":  "tests/regression/test_individual_fee_reapplication_v27.py",
+                      "sha256":  "2f5db0149f5c0969845a145ab63febea9841385568b270df14730f7ef1730a7f",
+                      "size_bytes":  7592
+                  },
+                  {
+                      "path":  "tests/regression/test_legacy_class_is_active_migration_order_same_v31.py",
+                      "sha256":  "81ec032b0d3b4ef04e4e504fc6948054bb60d3460a4e54d8cfe6a0a0de685803",
+                      "size_bytes":  4759
+                  },
+                  {
+                      "path":  "tests/regression/test_month_range_unpaid_fee_report_same_v31.py",
+                      "sha256":  "2c23a02fb5fdc8f86f63fa79bc7afb4ddfda8ad8323205fb5be2fb5ac3b361a5",
+                      "size_bytes":  16590
+                  },
+                  {
+                      "path":  "tests/regression/test_more_startup_migration_technical_hardening_same_v31.py",
+                      "sha256":  "17bee03389e4b74193affbbe4f107483fc33729086450fd5e533c062564cea78",
+                      "size_bytes":  20669
+                  },
+                  {
+                      "path":  "tests/regression/test_overdue_promotion_recovery_v23.py",
+                      "sha256":  "6c60ac2fbcd7718f8039f90461915528209a4e24d7748489a14f8eb247b771b4",
+                      "size_bytes":  31083
+                  },
+                  {
+                      "path":  "tests/regression/test_pay_fee_search_receipt_routing_same_v31.py",
+                      "sha256":  "cffedca322b1242e4b0247a1cc334e8997b4b4f35a76561072542871c944a727",
+                      "size_bytes":  2320
+                  },
+                  {
+                      "path":  "tests/regression/test_payment_cancellation_regressions.py",
+                      "sha256":  "ff977140c8c502b8c355db2ec4d092482a14ea6e10b76093cfd5170b335edeb6",
+                      "size_bytes":  10597
+                  },
+                  {
+                      "path":  "tests/regression/test_positive_full_class_fee_v26.py",
+                      "sha256":  "e562502fcf4ee512d4f5adcc58398f28355aeba4e9c50b343316d0aa0e0c3b68",
+                      "size_bytes":  6818
+                  },
+                  {
+                      "path":  "tests/regression/test_positive_roll_generation_regressions.py",
+                      "sha256":  "ab75af4f8106515f1c1962b5baf7f5b96e9850bcc5a61f784fb3546d799b4bb6",
+                      "size_bytes":  5391
+                  },
+                  {
+                      "path":  "tests/regression/test_promotion_regressions.py",
+                      "sha256":  "3ec2f85205976ec3d584b92e3f178402b1901a68bfba60695419be172c5dcb7b",
+                      "size_bytes":  5603
+                  },
+                  {
+                      "path":  "tests/regression/test_roll_lifecycle_regressions.py",
+                      "sha256":  "6b023426e1f87be87cf9dbecf567fc621b694e39925f093e4634c6aa00946e2f",
+                      "size_bytes":  14522
+                  },
+                  {
+                      "path":  "tests/regression/test_secure_offline_licensing_regression.py",
+                      "sha256":  "b70012cb118602cc5398cd230a40c7256b21a72a395cd79ba937e90fe2da0507",
+                      "size_bytes":  1813
+                  },
+                  {
+                      "path":  "tests/regression/test_sibling_event_month_regressions.py",
+                      "sha256":  "ae88ee36490d894ea0c99fe7b083f17416ef1cf5e2a34300a50c280a49494778",
+                      "size_bytes":  15668
+                  },
+                  {
+                      "path":  "tests/regression/test_sibling_setting_history_startup_v30.py",
+                      "sha256":  "513617be23bf0bc486a0d7580afe048c80b017fa9378bc29d5c104c099519355",
+                      "size_bytes":  5101
+                  },
+                  {
+                      "path":  "tests/regression/test_startup_data_initialization_false_positives.py",
+                      "sha256":  "5afe7a32246f0dae5f4173df10cb0bc0141bbe7558de84f79f6208450e234be2",
+                      "size_bytes":  14439
+                  },
+                  {
+                      "path":  "tests/regression/test_statistics_module.py",
+                      "sha256":  "77061831e6b2e45cd46be5151d296a52f0bc592f5e509b35d121f2d28a20ddf3",
+                      "size_bytes":  7734
+                  },
+                  {
+                      "path":  "tests/regression/test_student_status_regressions.py",
+                      "sha256":  "b056dcac079936d749044f69a3fa73575d363937949f5cd67bc63e96141a8ceb",
+                      "size_bytes":  6238
+                  },
+                  {
+                      "path":  "tests/regression/test_system_clock_admission_date_v25.py",
+                      "sha256":  "63ae97369c5aeda1e5295efc717f6079ead204fa4b9a5e7d60fecec6244ea369",
+                      "size_bytes":  5717
+                  },
+                  {
+                      "path":  "tests/regression/test_ui_safety_regressions_v22.py",
+                      "sha256":  "53b2d820f336d2a0ae861c64c6e1f9fbfb51fcc8979869f78368333dda61626b",
+                      "size_bytes":  10606
+                  },
+                  {
+                      "path":  "tests/regression/test_whole_school_single_page_print_v28.py",
+                      "sha256":  "efc2ef606e089ac256ada570256ddcbe3fc37df6b675d85d0c7bbdd4f5d47f20",
+                      "size_bytes":  3442
+                  },
+                  {
+                      "path":  "tests/unit/__init__.py",
+                      "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                      "size_bytes":  0
+                  },
+                  {
+                      "path":  "tests/unit/test_backup_crypto_unit.py",
+                      "sha256":  "7516362a636884d6552a45cd551f2b57d4a91cd69fc4c0e57741ddb9471db4f4",
+                      "size_bytes":  6289
+                  },
+                  {
+                      "path":  "tests/unit/test_backup_settings_and_repository_unit.py",
+                      "sha256":  "b442ff97afc942415d954d0fb8bd76a566814a0f26d2e7c3dc69907a3dc8fe0f",
+                      "size_bytes":  4689
+                  },
+                  {
+                      "path":  "tools/deployment_preflight.py",
+                      "sha256":  "a7ea5dd75e2ceba9d3e7946c0ea57c2eae781d66f97ad31e26712549952f6301",
+                      "size_bytes":  9032
+                  },
+                  {
+                      "path":  "tools/run_all_tests.py",
+                      "sha256":  "0c2ad6d55980db870e7d0f8f6bdd362fd68a733b16e03e7af486fd63084fb9ea",
+                      "size_bytes":  842
+                  },
+                  {
+                      "path":  "tools/run_regression_tests.py",
+                      "sha256":  "ad364bbc4427776a887dbaf568ab909ff163b53e5a8aa13589bd2b9356852a67",
+                      "size_bytes":  685
+                  }
+              ],
+    "installer_included":  false,
+    "installer_rebuilt":  false,
+    "package_format_version":  2,
+    "source_root":  "SchoolManagementSystem",
+    "total_size_bytes":  3872389,
+    "clean_deployment":  {
+                             "bundled_database":  false,
+                             "bundled_school_records":  false,
+                             "first_run_database_creation":  true,
+                             "database_schema_version":  23,
+                             "application_version":  "1.1.0"
+                         }
 }

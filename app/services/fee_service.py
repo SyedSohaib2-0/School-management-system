@@ -2522,6 +2522,47 @@ def pause_fee_records_after_drop(
             connection.close()
 
 
+def remove_unpaid_fee_records_for_archive(
+    student_id: int,
+    connection=None,
+) -> int:
+    """Remove every unreceipted Unpaid fee row when a student is archived."""
+    owns_connection = connection is None
+    if owns_connection:
+        connection = get_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(
+            """
+            DELETE FROM student_fee_records
+            WHERE student_id = ?
+              AND status = ?
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM fee_receipts AS receipts
+                    INNER JOIN fee_payments AS payments
+                      ON payments.id = receipts.payment_id
+                    WHERE receipts.student_fee_record_id = student_fee_records.id
+                      AND receipts.status = 'Paid'
+                      AND payments.payment_status = 'Completed'
+              )
+            """,
+            (int(student_id), FEE_STATUS_UNPAID),
+        )
+        deleted_rows = int(cursor.rowcount or 0)
+        if owns_connection:
+            connection.commit()
+        return deleted_rows
+    except Exception:
+        if owns_connection:
+            connection.rollback()
+        raise
+    finally:
+        if owns_connection:
+            connection.close()
+
+
 def _get_latest_drop_boundary(
     cursor,
     student_id: int,
@@ -2530,10 +2571,40 @@ def _get_latest_drop_boundary(
     """
     Read the latest status-pause marker.
 
-    A status pause is stored in student_class_history as a MANUAL row with
-    old_class_id NULL and new_class_id equal to the current class. ADMISSION
-    rows also use old_class_id NULL, but have change_type ADMISSION.
+    Current drop transitions are recorded in student_status_history.  The
+    student_class_history lookup is retained only for older databases whose
+    drop workflow used a same-class MANUAL marker.
     """
+    cursor.execute(
+        """
+        SELECT effective_datetime
+        FROM student_status_history
+        WHERE student_id = ?
+          AND event_type = 'DROP'
+          AND new_status = ?
+          AND related_class_id = ?
+        ORDER BY effective_datetime DESC, id DESC
+        LIMIT 1
+        """,
+        (
+            int(student_id),
+            STATUS_DROPPED,
+            int(current_class_id),
+        ),
+    )
+
+    status_row = cursor.fetchone()
+    if status_row:
+        try:
+            dropped_at = datetime.fromisoformat(
+                str(status_row["effective_datetime"])
+            )
+            return dropped_at.month, dropped_at.year
+        except (TypeError, ValueError):
+            # Fall through to the legacy marker when an old database contains
+            # a malformed status-history timestamp.
+            pass
+
     cursor.execute(
         """
         SELECT
@@ -3448,7 +3519,8 @@ def validate_payment_selection(
             """
             SELECT
                 id,
-                status
+                status,
+                session_year
 
             FROM student_fee_records
 
@@ -3504,6 +3576,14 @@ def validate_payment_selection(
             )
         ]
     )
+
+    selected_sessions = {
+        str(row["session_year"] or "").strip()
+        for row in rows
+        if int(row["id"]) in set(normalised_record_ids)
+    }
+    if len(selected_sessions) != 1:
+        return False
 
     return (
         len(normalised_record_ids)
@@ -3592,6 +3672,14 @@ def get_payment_preview(
             })
 
         distinct_classes = list(dict.fromkeys(historical_classes))
+        distinct_sessions = {
+            str(row["session_year"] or "").strip()
+            for row in selected_rows
+        }
+        if len(distinct_sessions) != 1:
+            raise ValueError(
+                "One receipt can contain fees from only one academic session."
+            )
         header_class = (
             distinct_classes[0]
             if len(distinct_classes) == 1
@@ -3607,6 +3695,7 @@ def get_payment_preview(
             "father_cnic": student_row["father_cnic"] or "-",
             "class_name": header_class,
             "student_status": student_row["student_status"],
+            "session_year": next(iter(distinct_sessions)),
             "fee_items": fee_items,
             "total_amount": round(total_amount, 2),
         }
@@ -3673,6 +3762,70 @@ def build_payment_session_label(rows, key="session_year") -> str:
     if len(sessions) > 1:
         return "MULTIPLE SESSIONS"
     return "-"
+
+
+def _build_session_payment_history_snapshot(
+    cursor,
+    *,
+    student_id: int,
+    session_year: str,
+) -> list[dict]:
+    """Capture the receipt's immutable April-March paid/waived history."""
+    session_year = str(session_year or "").strip()
+    try:
+        session_start_year = int(session_year[:4])
+    except (TypeError, ValueError):
+        return []
+
+    paid_rows = cursor.execute(
+        """
+        SELECT receipts.month_number_snapshot AS month_number,
+               receipts.year_snapshot AS calendar_year,
+               SUM(receipts.amount) AS paid_amount,
+               MAX(payments.payment_date) AS paid_date
+        FROM fee_receipts AS receipts
+        INNER JOIN fee_payments AS payments ON payments.id=receipts.payment_id
+        WHERE payments.student_id=?
+          AND payments.payment_status=?
+          AND receipts.status=?
+          AND receipts.session_year_snapshot=?
+        GROUP BY receipts.month_number_snapshot, receipts.year_snapshot
+        """,
+        (student_id, PAYMENT_STATUS_COMPLETED, FEE_STATUS_PAID, session_year),
+    ).fetchall()
+    paid_by_month = {
+        int(row["month_number"]): row
+        for row in paid_rows
+        if row["month_number"] is not None
+    }
+    waived_months = {
+        int(row["month_number"])
+        for row in cursor.execute(
+            """
+            SELECT month_number FROM student_fee_records
+            WHERE student_id=? AND fee_type=? AND session_year=? AND status=?
+            """,
+            (student_id, FEE_TYPE_MONTHLY, session_year, FEE_STATUS_WAIVED),
+        ).fetchall()
+        if row["month_number"] is not None
+    }
+
+    history = []
+    for _month_name, month_number in SESSION_MONTH_ORDER:
+        calendar_year = (
+            session_start_year
+            if int(month_number) >= SESSION_START_CALENDAR_MONTH
+            else session_start_year + 1
+        )
+        paid = paid_by_month.get(int(month_number))
+        history.append({
+            "month_number": int(month_number),
+            "year": int(calendar_year),
+            "status": "Paid" if paid else "Waived" if int(month_number) in waived_months else "",
+            "amount": round(float(paid["paid_amount"]), 2) if paid else None,
+            "paid_date": str(paid["paid_date"] or "") if paid else "",
+        })
+    return history
 
 def normalize_payment_receipt_number(
     receipt_number,
@@ -3787,6 +3940,26 @@ def get_completed_payment_by_receipt_number(
             "student_status_after": payment_row["student_status_after"],
             "payment_status": payment_status,
             "historical_receipt": True,
+            "session_history": [
+                {
+                    "month_number": int(row["month_number"]),
+                    "year": int(row["calendar_year"]),
+                    "status": row["history_status"],
+                    "amount": row["paid_amount"],
+                    "paid_date": row["paid_date"] or "",
+                }
+                for row in cursor.execute(
+                    """
+                    SELECT month_number, calendar_year, history_status,
+                           paid_amount, paid_date
+                    FROM fee_payment_session_history
+                    WHERE payment_id=?
+                    ORDER BY CASE WHEN month_number>=? THEN month_number
+                                  ELSE month_number+12 END
+                    """,
+                    (int(payment_row["id"]), SESSION_START_CALENDAR_MONTH),
+                ).fetchall()
+            ],
         }
     finally:
         connection.close()
@@ -4058,6 +4231,17 @@ def process_payment(
                 )
             )
 
+        selected_sessions = {
+            str(row["session_year"] or "").strip()
+            for row in selected_rows
+        }
+        if len(selected_sessions) != 1:
+            raise ValueError(
+                "One receipt can contain fees from only one academic session. "
+                "Pay each session separately."
+            )
+        selected_session = next(iter(selected_sessions))
+
         selected_ids_from_database = {
             int(
                 row["id"]
@@ -4293,6 +4477,32 @@ def process_payment(
                     "A selected fee record was already paid or changed before the payment completed."
                 )
 
+        session_history = _build_session_payment_history_snapshot(
+            cursor,
+            student_id=student_id,
+            session_year=selected_session,
+        )
+        cursor.executemany(
+            """
+            INSERT INTO fee_payment_session_history(
+                payment_id, session_year, month_number, calendar_year,
+                history_status, paid_amount, paid_date
+            ) VALUES(?,?,?,?,?,?,?)
+            """,
+            [
+                (
+                    payment_id,
+                    selected_session,
+                    item["month_number"],
+                    item["year"],
+                    item["status"],
+                    item["amount"],
+                    item["paid_date"] or None,
+                )
+                for item in session_history
+            ],
+        )
+
         # Runtime financial integrity: one payment owns every receipt item,
         # no fee record is repeated, and the item total equals the payment total.
         receipt_integrity_rows = cursor.execute(
@@ -4424,9 +4634,8 @@ def process_payment(
                 or "-"
             ),
             "class_name": receipt_class_name,
-            "session_year": build_payment_session_label(
-                selected_rows, key="session_year"
-            ),
+            "session_year": selected_session,
+            "session_history": session_history,
             "paid_items": paid_items,
             "total_paid": total_amount,
             "received_by": received_by,

@@ -204,16 +204,18 @@ class AdditionalBugFixV13ScopeTests(unittest.TestCase):
                 year=2026,
                 amount=1200,
             )
-            result = app.fee_service.process_payment(student_id, [first, second])
+            with self.assertRaisesRegex(ValueError, "only one academic session"):
+                app.fee_service.process_payment(student_id, [first, second])
+            result = app.fee_service.process_payment(student_id, [first])
             reprint = app.fee_service.get_completed_payment_by_receipt_number(
                 result["receipt_no"]
             )
             self.assertEqual(result["receipt_no"], reprint["receipt_no"])
-            self.assertEqual(result["session_year"], "MULTIPLE SESSIONS")
-            self.assertEqual(reprint["session_year"], "MULTIPLE SESSIONS")
+            self.assertEqual(result["session_year"], "2025-2026")
+            self.assertEqual(reprint["session_year"], "2025-2026")
             self.assertEqual(
                 {item["session_year"] for item in reprint["paid_items"]},
-                {"2025-2026", "2026-2027"},
+                {"2025-2026"},
             )
 
             receipt_source = (PROJECT_ROOT / "app/modules/fee_receipt.py").read_text()
@@ -233,7 +235,7 @@ class AdditionalBugFixV13ScopeTests(unittest.TestCase):
                 datetime.now().date()
             )
             payment_row = next(row for row in finance_rows if row["receipt_no"] == result["receipt_no"])
-            self.assertEqual(payment_row["session_year"], "MULTIPLE SESSIONS")
+            self.assertEqual(payment_row["session_year"], "2025-2026")
 
     def test_real_time_finance_uses_one_read_snapshot(self):
         with IsolatedApplication() as app:

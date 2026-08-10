@@ -145,12 +145,18 @@ class OverduePromotionRecoveryV23Tests(unittest.TestCase):
                 """,
                 (student_id,),
             )
-            payment_ids = [
+            previous_session_ids = [
                 int(row["id"])
                 for row in before
-                if (int(row["year"]), int(row["month_number"])) <= (2027, 4)
+                if (int(row["year"]), int(row["month_number"])) <= (2027, 3)
             ]
-            payment = app.fee_service.process_payment(student_id, payment_ids)
+            current_session_ids = [
+                int(row["id"])
+                for row in before
+                if (int(row["year"]), int(row["month_number"])) == (2027, 4)
+            ]
+            app.fee_service.process_payment(student_id, previous_session_ids)
+            payment = app.fee_service.process_payment(student_id, current_session_ids)
             paid_april_before = dict(
                 fetch_one(
                     app,
@@ -241,7 +247,7 @@ class OverduePromotionRecoveryV23Tests(unittest.TestCase):
                 "SELECT class_id,amount,status FROM student_fee_records WHERE student_id=? AND month_number=4 AND year=2027",
                 (student_id,),
             )
-            self.assertEqual((int(march["class_id"]), float(march["amount"]), march["status"]), (class_1a, 1000.0, "Unpaid"))
+            self.assertEqual((int(march["class_id"]), float(march["amount"]), march["status"]), (class_1a, 1000.0, "Paid"))
             self.assertEqual((int(april["class_id"]), float(april["amount"]), april["status"]), (class_2a, 1500.0, "Unpaid"))
 
     def test_overdue_failed_student_stays_and_unpaid_target_session_uses_source_fee(self):
@@ -303,12 +309,18 @@ class OverduePromotionRecoveryV23Tests(unittest.TestCase):
                 "SELECT id,month_number,year FROM student_fee_records WHERE student_id=? ORDER BY year,month_number",
                 (student_id,),
             )
-            paid_ids = [
+            previous_session_ids = [
                 int(row["id"])
                 for row in rows
-                if (int(row["year"]), int(row["month_number"])) <= (2027, 4)
+                if (int(row["year"]), int(row["month_number"])) <= (2027, 3)
             ]
-            payment = app.fee_service.process_payment(student_id, paid_ids)
+            current_session_ids = [
+                int(row["id"])
+                for row in rows
+                if (int(row["year"]), int(row["month_number"])) == (2027, 4)
+            ]
+            app.fee_service.process_payment(student_id, previous_session_ids)
+            payment = app.fee_service.process_payment(student_id, current_session_ids)
 
             # A later fee revision must not mutate the historical paid April row.
             self._set_fee(app, class_1a, 1200, 2027)

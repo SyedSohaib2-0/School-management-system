@@ -30,12 +30,7 @@ from app.auth_dialogs import (
     CredentialSetupDialog,
     LoginDialog,
 )
-from app.licence_generator.activation_password_dialog import (
-    ActivationPasswordDialog,
-)
-from app.licence_generator.licence_generator_dialog import (
-    LicenceGeneratorDialog,
-)
+from app.license_activation_dialog import LicenseActivationDialog
 from app.services.backup_scheduler import (
     complete_pending_backups_before_exit,
     start_automatic_backup_scheduler,
@@ -169,59 +164,16 @@ def main():
         "success",
         False,
     ):
-        # First restrict access to the private licence generator.
-        password_dialog = ActivationPasswordDialog()
-
-        password_dialog_result = (
-            password_dialog.exec()
+        activation_dialog = LicenseActivationDialog(
+            verification_message=license_result.get("message", ""),
         )
-
         if (
-            password_dialog_result
-            != QDialog.DialogCode.Accepted
+            activation_dialog.exec() != QDialog.DialogCode.Accepted
+            or not activation_dialog.activation_successful
         ):
             return
 
-        authorised_private_key = (
-            password_dialog.take_private_key()
-        )
-
-        if authorised_private_key is None:
-            QMessageBox.critical(
-                None,
-                "Private Activation Failed",
-                (
-                    "The private licence-signing key "
-                    "could not be unlocked."
-                ),
-            )
-
-            return
-
-        # Allow the authorised provider to choose the validity period,
-        # generate the signed licence, and activate this computer.
-        generator_dialog = LicenceGeneratorDialog(
-            authorised_private_key=(
-                authorised_private_key
-            ),
-        )
-
-        generator_dialog_result = (
-            generator_dialog.exec()
-        )
-
-        # Remove unnecessary references to the private signing key.
-        authorised_private_key = None
-        generator_dialog.authorised_private_key = None
-
-        if (
-            generator_dialog_result
-            != QDialog.DialogCode.Accepted
-            or not generator_dialog.activation_successful
-        ):
-            return
-
-        # Verify the newly generated licence independently before
+        # Verify the newly imported licence independently before
         # accessing the school database. Treat verification dependencies and
         # damaged licence files exactly like the initial pre-database check.
         try:
@@ -230,7 +182,7 @@ def main():
             QMessageBox.critical(
                 None,
                 "Software Activation Could Not Be Verified",
-                "The newly generated licence could not be checked safely. "
+                "The newly imported licence could not be checked safely. "
                 "No school database was opened.\n\n"
                 f"Technical details: {type(error).__name__}: {error}",
             )
@@ -246,7 +198,7 @@ def main():
                 license_result.get(
                     "message",
                     (
-                        "The generated licence could not "
+                        "The imported licence could not "
                         "be verified."
                     ),
                 ),

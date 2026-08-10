@@ -108,6 +108,54 @@ def _receipt_month_label(item: dict) -> str:
     )
 
 
+def _session_history_html(data: dict) -> str:
+    """Build the compact immutable April-March history grid."""
+    history = list(data.get("session_history") or [])
+    if not history:
+        return ""
+
+    headers = []
+    amounts = []
+    dates = []
+    month_abbreviations = {
+        1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
+        7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec",
+    }
+    for item in history:
+        month = int(item.get("month_number") or 0)
+        year = int(item.get("year") or 0)
+        status = str(item.get("status") or "")
+        headers.append(
+            f"<th>{month_abbreviations.get(month, '-')}<br>{year % 100:02d}</th>"
+        )
+        if status == "Paid" and item.get("amount") is not None:
+            amounts.append(f"<td>{float(item['amount']):,.0f}</td>")
+            raw_date = str(item.get("paid_date") or "")
+            try:
+                display_date = datetime.fromisoformat(raw_date).strftime("%d-%m-%y")
+            except ValueError:
+                display_date = raw_date[:10]
+            dates.append(f"<td>{escape(display_date)}</td>")
+        elif status == "Waived":
+            amounts.append("<td>Waived</td>")
+            dates.append("<td>-</td>")
+        else:
+            amounts.append("<td></td>")
+            dates.append("<td></td>")
+
+    session = escape(str(data.get("session_year") or "-"))
+    return (
+        f"<div class='history-title'>Fee Payment History — Session {session}</div>"
+        "<table class='history'><tr>"
+        + "".join(headers)
+        + "</tr><tr>"
+        + "".join(amounts)
+        + "</tr><tr>"
+        + "".join(dates)
+        + "</tr></table>"
+    )
+
+
 def _receipt_density(item_count: int) -> dict:
     """Keep one to twelve monthly rows readable inside one quarter A4."""
     item_count = max(
@@ -692,6 +740,7 @@ class FeeReceiptPage(QWidget):
         default_session = str(
             payment_data.get("session_year") or ""
         ).strip()
+        session_history_html = _session_history_html(payment_data)
 
         item_rows = ""
 
@@ -788,6 +837,20 @@ class FeeReceiptPage(QWidget):
                     margin-top: 9px;
                     font-weight: 700;
                 }}
+                .history-title {{
+                    font-weight: 800;
+                    margin-top: 6px;
+                }}
+                .history {{
+                    font-size: 5.8pt;
+                    table-layout: fixed;
+                }}
+                .history th,
+                .history td {{
+                    border: 1px solid #4B5563;
+                    padding: 1px;
+                    text-align: center;
+                }}
             </style>
         </head>
         <body>
@@ -859,6 +922,8 @@ class FeeReceiptPage(QWidget):
             <div class="accountant">
                 ____________________<br>Accountant
             </div>
+
+            {session_history_html}
         </body>
         </html>
         """
@@ -1104,6 +1169,7 @@ class FeeReceiptPage(QWidget):
         default_session = str(
             data.get("session_year") or ""
         ).strip()
+        session_history_html = _session_history_html(data)
 
         paid_rows = ""
 
@@ -1211,6 +1277,21 @@ class FeeReceiptPage(QWidget):
                     margin-top: 6px;
                     font-weight: 700;
                 }}
+                .history-title {{
+                    font-weight: 800;
+                    margin-top: 4px;
+                    font-size: 6.4pt;
+                }}
+                .history {{
+                    font-size: 4.8pt;
+                    table-layout: fixed;
+                }}
+                .history th,
+                .history td {{
+                    border: 1px solid #4B5563;
+                    padding: 1px 0;
+                    text-align: center;
+                }}
             </style>
         </head>
         <body>
@@ -1285,6 +1366,8 @@ class FeeReceiptPage(QWidget):
             <div class="accountant">
                 ____________________<br>Accountant
             </div>
+
+            {session_history_html}
         </body>
         </html>
         """

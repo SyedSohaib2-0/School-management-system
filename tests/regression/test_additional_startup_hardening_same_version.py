@@ -238,13 +238,19 @@ class AdditionalStartupHardeningSameVersionTests(unittest.TestCase):
                 """,
                 (student_id,),
             )
+            previous_session = [
+                int(row["id"])
+                for row in rows
+                if (int(row["year"]), int(row["month_number"])) <= (2027, 3)
+            ]
             selected = [
                 int(row["id"])
                 for row in rows
-                if (int(row["year"]), int(row["month_number"])) <= (2027, 4)
+                if (int(row["year"]), int(row["month_number"])) == (2027, 4)
             ]
 
             with mock.patch.object(app.fee_service, "datetime", FixedPaymentDateTime):
+                app.fee_service.process_payment(student_id, previous_session)
                 payment = app.fee_service.process_payment(student_id, selected)
 
             app.promotion_full_class_v2.promote_full_class(

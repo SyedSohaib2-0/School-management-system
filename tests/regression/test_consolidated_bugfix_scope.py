@@ -226,22 +226,23 @@ class ConsolidatedBugFixScopeTests(unittest.TestCase):
                 amount=1200,
             )
 
-            preview = app.fee_service.get_payment_preview(
-                student_id, [january, april]
-            )
-            self.assertEqual(preview["class_name"], "MULTIPLE CLASSES")
+            with self.assertRaisesRegex(ValueError, "correct payment order"):
+                app.fee_service.get_payment_preview(student_id, [january, april])
+            app.fee_service.process_payment(student_id, [january], received_by="admin")
+            preview = app.fee_service.get_payment_preview(student_id, [april])
+            self.assertEqual(preview["class_name"], "2A")
             self.assertEqual(
                 [item["class_name"] for item in preview["fee_items"]],
-                ["1A", "2A"],
+                ["2A"],
             )
 
             immediate = app.fee_service.process_payment(
-                student_id, [january, april], received_by="admin"
+                student_id, [april], received_by="admin"
             )
-            self.assertEqual(immediate["class_name"], "MULTIPLE CLASSES")
+            self.assertEqual(immediate["class_name"], "2A")
             self.assertEqual(
                 [item["class_name"] for item in immediate["paid_items"]],
-                ["1A", "2A"],
+                ["2A"],
             )
 
             connection = app.connect()
@@ -267,7 +268,7 @@ class ConsolidatedBugFixScopeTests(unittest.TestCase):
             self.assertEqual(int(reprint["roll_number"]), 7)
             self.assertEqual(reprint["student_name"], "Original Student")
             self.assertEqual(reprint["father_name"], "Original Father")
-            self.assertEqual(reprint["class_name"], "MULTIPLE CLASSES")
+            self.assertEqual(reprint["class_name"], "2A")
             self.assertEqual(reprint["paid_items"], immediate["paid_items"])
 
             payment_date = fetch_one(
@@ -283,7 +284,7 @@ class ConsolidatedBugFixScopeTests(unittest.TestCase):
             self.assertEqual(int(row["roll_number"]), 7)
             self.assertEqual(row["student_name"], "Original Student")
             self.assertEqual(row["father_name"], "Original Father")
-            self.assertEqual(row["class_name"], "MULTIPLE CLASSES")
+            self.assertEqual(row["class_name"], "2A")
 
     def test_class_validation_positive_roll_and_zero_roll_search_rejection(self):
         with IsolatedApplication() as app:

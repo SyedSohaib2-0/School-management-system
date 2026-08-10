@@ -244,6 +244,39 @@ def get_activation_request_code() -> str:
         f"HMS-{grouped_code}"
     )
 
+
+def machine_fingerprint_from_request_code(
+    request_code: str,
+) -> str:
+    """Validate an activation request code and recover its fingerprint."""
+    normalised_code = "".join(
+        str(request_code or "").strip().upper().split()
+    )
+    if not normalised_code.startswith("HMS-"):
+        raise ValueError("The activation request code must start with HMS-.")
+
+    encoded_fingerprint = normalised_code[4:].replace("-", "")
+    if len(encoded_fingerprint) != 52 or any(
+        character not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+        for character in encoded_fingerprint
+    ):
+        raise ValueError("The activation request code is incomplete or invalid.")
+
+    padded_code = encoded_fingerprint + (
+        "=" * ((8 - len(encoded_fingerprint) % 8) % 8)
+    )
+    try:
+        fingerprint_bytes = base64.b32decode(
+            padded_code,
+            casefold=False,
+        )
+    except (ValueError, TypeError) as error:
+        raise ValueError("The activation request code is invalid.") from error
+
+    if len(fingerprint_bytes) != 32:
+        raise ValueError("The activation request code has an invalid length.")
+    return fingerprint_bytes.hex()
+
 def _canonical_license_payload(
     payload: dict,
 ) -> bytes:

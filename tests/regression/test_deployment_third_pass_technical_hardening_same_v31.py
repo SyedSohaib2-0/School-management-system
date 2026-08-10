@@ -238,10 +238,10 @@ class DeploymentThirdPassTechnicalHardeningSameV31Tests(unittest.TestCase):
             self.assertEqual(len(data), item["size_bytes"], item["path"])
             self.assertEqual(hashlib.sha256(data).hexdigest(), item["sha256"], item["path"])
 
-    def test_post_generation_licence_verification_is_exception_guarded(self):
+    def test_post_import_licence_verification_is_exception_guarded(self):
         source = (PROJECT_ROOT / "run.py").read_text(encoding="utf-8")
         segment = source.split(
-            "# Verify the newly generated licence independently before", 1
+            "# Verify the newly imported licence independently before", 1
         )[1].split("# Apply a staged database restore", 1)[0]
         self.assertIn("try:", segment)
         self.assertIn("except Exception as error:", segment)

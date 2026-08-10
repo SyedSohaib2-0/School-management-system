@@ -3613,6 +3613,21 @@ def initialize_database() -> None:
         );
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS fee_payment_session_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            payment_id INTEGER NOT NULL,
+            session_year TEXT NOT NULL,
+            month_number INTEGER NOT NULL CHECK (month_number BETWEEN 1 AND 12),
+            calendar_year INTEGER NOT NULL,
+            history_status TEXT NOT NULL CHECK (history_status IN ('', 'Paid', 'Waived')),
+            paid_amount REAL,
+            paid_date TEXT,
+            UNIQUE(payment_id, month_number, calendar_year),
+            FOREIGN KEY (payment_id) REFERENCES fee_payments (id) ON DELETE CASCADE
+        );
+    """)
+
     # -----------------------------------------------------------------
     # Expenses table
     #

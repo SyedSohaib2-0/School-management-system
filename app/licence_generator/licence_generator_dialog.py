@@ -1,12 +1,14 @@
 """
 Integrated private licence-generator dialog.
 
-This dialog generates a digitally signed, machine-bound licence and
-installs it automatically on the current customer computer.
+This owner-only dialog generates a digitally signed, machine-bound licence
+for a customer request code and saves it as a portable .lic file.
 """
 
 import base64
 import calendar
+import json
+import os
 import uuid
 from datetime import datetime, timezone
 
@@ -16,6 +18,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
+    QFileDialog,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
@@ -35,14 +38,13 @@ from app.licence_generator.licence_security import (
 from app.services.license_service import (
     PRODUCT_CODE,
     _canonical_license_payload,
-    get_machine_fingerprint,
-    install_generated_license_document,
+    machine_fingerprint_from_request_code,
 )
 
 
 class LicenceGeneratorDialog(QDialog):
     """
-    Generate and automatically activate a licence on this computer.
+    Generate an owner-signed licence file for a customer computer.
     """
 
     def __init__(
@@ -58,6 +60,7 @@ class LicenceGeneratorDialog(QDialog):
             authorised_private_key
         )
 
+        self.generation_successful = False
         self.activation_successful = False
         self.generated_payload = None
 
@@ -99,7 +102,7 @@ class LicenceGeneratorDialog(QDialog):
         )
 
         title_label = QLabel(
-            "Generate and Activate Software Licence"
+            "Generate Customer Licence File"
         )
 
         title_label.setAlignment(
@@ -116,8 +119,8 @@ class LicenceGeneratorDialog(QDialog):
         )
 
         privacy_label = QLabel(
-            "Restricted activation section. The generated licence "
-            "will be bound to this computer and installed automatically."
+            "Owner-only tool. Paste the request code supplied by the "
+            "customer. The generated licence will work only on that computer."
         )
 
         privacy_label.setWordWrap(
@@ -152,6 +155,15 @@ class LicenceGeneratorDialog(QDialog):
         customer_layout.addRow(
             "Customer/school name:",
             self.customer_name_edit,
+        )
+
+        self.request_code_edit = QLineEdit()
+        self.request_code_edit.setPlaceholderText(
+            "HMS-XXXX-XXXX-..."
+        )
+        customer_layout.addRow(
+            "Activation request code:",
+            self.request_code_edit,
         )
 
         main_layout.addWidget(
@@ -232,7 +244,7 @@ class LicenceGeneratorDialog(QDialog):
         )
 
         self.confirmation_password_edit.returnPressed.connect(
-            self._generate_and_activate
+            self._generate_and_save
         )
 
         confirmation_layout.addRow(
@@ -247,7 +259,7 @@ class LicenceGeneratorDialog(QDialog):
         button_layout = QHBoxLayout()
 
         self.generate_button = QPushButton(
-            "Generate and Activate Licence"
+            "Generate Licence File"
         )
 
         self.generate_button.setMinimumHeight(
@@ -255,7 +267,7 @@ class LicenceGeneratorDialog(QDialog):
         )
 
         self.generate_button.clicked.connect(
-            self._generate_and_activate
+            self._generate_and_save
         )
 
         button_layout.addWidget(
@@ -645,10 +657,10 @@ class LicenceGeneratorDialog(QDialog):
             == confirmation_public_key
         )
 
-    def _generate_and_activate(
+    def _generate_and_save(
         self,
     ) -> None:
-        """Sign, install, and verify the selected licence."""
+        """Sign and save a licence for the supplied customer request code."""
         customer_name = (
             self.customer_name_edit.text().strip()
         )
@@ -663,6 +675,20 @@ class LicenceGeneratorDialog(QDialog):
             )
 
             self.customer_name_edit.setFocus()
+            return
+
+        request_code = self.request_code_edit.text().strip()
+        try:
+            customer_fingerprint = machine_fingerprint_from_request_code(
+                request_code
+            )
+        except ValueError as error:
+            QMessageBox.warning(
+                self,
+                "Valid Request Code Required",
+                str(error),
+            )
+            self.request_code_edit.setFocus()
             return
 
         confirmation_password = (
@@ -755,7 +781,7 @@ class LicenceGeneratorDialog(QDialog):
             "customer_name": customer_name,
             "product_code": PRODUCT_CODE,
             "machine_fingerprint": (
-                get_machine_fingerprint()
+                customer_fingerprint
             ),
             "issued_at": self._format_utc_datetime(
                 issued_datetime
@@ -790,37 +816,50 @@ class LicenceGeneratorDialog(QDialog):
             ),
         }
 
-        install_result = (
-            install_generated_license_document(
-                licence_document
-            )
+        safe_customer_name = "".join(
+            character if character.isalnum() or character in "-_" else "_"
+            for character in customer_name
+        ).strip("_") or "customer"
+        suggested_name = f"{safe_customer_name}_{payload['license_id'][:8]}.lic"
+        selected_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Customer Licence",
+            suggested_name,
+            "Hira Model School Licence (*.lic)",
         )
+        if not selected_path:
+            return
+        if not selected_path.lower().endswith(".lic"):
+            selected_path += ".lic"
 
-        if not install_result.get(
-            "success",
-            False,
-        ):
+        temporary_path = f"{selected_path}.tmp"
+        try:
+            with open(temporary_path, "w", encoding="utf-8") as licence_file:
+                json.dump(
+                    licence_document,
+                    licence_file,
+                    indent=4,
+                    ensure_ascii=False,
+                )
+                licence_file.flush()
+                os.fsync(licence_file.fileno())
+            os.replace(temporary_path, selected_path)
+        except (OSError, TypeError, ValueError) as error:
+            try:
+                if os.path.isfile(temporary_path):
+                    os.remove(temporary_path)
+            except OSError:
+                pass
             QMessageBox.critical(
                 self,
-                "Licence Activation Failed",
-                install_result.get(
-                    "message",
-                    (
-                        "The licence could not be installed "
-                        "or verified."
-                    ),
-                ),
+                "Licence File Could Not Be Saved",
+                f"The licence could not be saved.\n\nDetails: {error}",
             )
-
             return
 
-        self.generated_payload = (
-            install_result.get(
-                "license_payload",
-                payload,
-            )
-        )
+        self.generated_payload = payload
 
+        self.generation_successful = True
         self.activation_successful = True
         self.authorised_private_key = None
 
@@ -833,18 +872,17 @@ class LicenceGeneratorDialog(QDialog):
 
         QMessageBox.information(
             self,
-            "Software Activated Successfully",
+            "Licence File Generated",
             (
-                "The licence was generated, digitally signed, "
-                "installed, and verified successfully.\n\n"
+                "The licence was generated and digitally signed.\n\n"
                 f"Customer: {customer_name}\n"
                 f"Licence type: "
                 f"{self.generated_payload.get('license_type')}\n"
                 f"Starts: "
                 f"{self.generated_payload.get('starts_at')}\n"
-                f"Expires: {expiry_display}\n\n"
-                "The Hira Model School Management System "
-                "will now open."
+                f"Expires: {expiry_display}\n"
+                f"Saved as: {selected_path}\n\n"
+                "Send only this .lic file to the customer."
             ),
         )
 

@@ -102,6 +102,11 @@ class DeploymentSecondPassHardeningSameV31Tests(unittest.TestCase):
         self.assertIn("CURRENT_SCHEMA_VERSION = 23", database_source)
         self.assertIn('#define MyAppVersion "1.1.0"', installer_source)
 
+    def test_customer_package_does_not_bundle_private_signing_material(self):
+        customer_spec = (ROOT / "HiraModelSchool.spec").read_text(encoding="utf-8")
+        self.assertNotIn("encrypted_signing_key.json", customer_spec)
+        self.assertIn("app.licence_generator", customer_spec)
+
 
 if __name__ == "__main__":
     unittest.main()

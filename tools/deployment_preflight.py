@@ -89,6 +89,40 @@ def run_preflight() -> dict:
                 "customer_signing_key",
                 "The customer build bundles the encrypted private licence-signing key and in-app generator. This security architecture needs owner approval before deployment.",
             )
+        elif "app.licence_generator" not in spec:
+            _record(
+                results,
+                "error",
+                "customer_signing_key",
+                "Customer spec removes the key but does not explicitly exclude the private generator package.",
+            )
+        else:
+            _record(
+                results,
+                "pass",
+                "customer_signing_key",
+                "Customer build contains only public-key verification and excludes the private generator.",
+            )
+
+    owner_spec_path = ROOT / "HiraModelSchoolLicenseGenerator.spec"
+    if owner_spec_path.is_file():
+        owner_spec = _read(owner_spec_path)
+        if "encrypted_signing_key.json" in owner_spec and "owner_license_generator.py" in owner_spec:
+            _record(
+                results,
+                "pass",
+                "owner_generator_package",
+                "The encrypted signing key is restricted to the separate owner-generator build.",
+            )
+        else:
+            _record(
+                results,
+                "error",
+                "owner_generator_package",
+                "The separate owner-generator build is incomplete.",
+            )
+    else:
+        _record(results, "error", "owner_generator_package", "Owner generator spec is missing")
 
     forbidden = []
     for base in (ROOT, ROOT / "dist"):

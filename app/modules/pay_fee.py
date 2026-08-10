@@ -1617,6 +1617,10 @@ class PayFeePage(QWidget):
                     )
                 ),
             )
+            checkbox.setProperty(
+                "session_year",
+                str(row_value(fee_row, "session_year", "") or "").strip(),
+            )
 
             if fee_status != "Unpaid":
                 checkbox.setEnabled(
@@ -1830,6 +1834,9 @@ class PayFeePage(QWidget):
         self._update_selected_total()
 
     def _enable_next_unpaid_checkbox(self, current_index):
+        selected_session = str(
+            self.fee_rows[current_index]["session_year"] or ""
+        ).strip()
         for next_index in range(
             current_index + 1,
             len(self.fee_rows),
@@ -1841,6 +1848,14 @@ class PayFeePage(QWidget):
 
             if fee_row["status"] != "Unpaid":
                 continue
+
+            if str(fee_row["session_year"] or "").strip() != selected_session:
+                next_checkbox.setEnabled(False)
+                next_checkbox.setToolTip(
+                    "One receipt can contain fees from only one academic session. "
+                    "Complete the selected session as a separate payment."
+                )
+                break
 
             next_checkbox.setEnabled(True)
             break
