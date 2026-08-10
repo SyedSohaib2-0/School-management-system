@@ -286,7 +286,9 @@ class DeploymentReadinessHardeningSameV31Tests(unittest.TestCase):
             ROOT / "installer" / "HiraModelSchoolInstaller.iss"
         ).read_text(encoding="utf-8")
         self.assertIn("[InstallDelete]", source)
-        self.assertIn('Type: filesandordirs; Name: "{app}\\*"', source)
+        self.assertNotIn('Name: "{app}\\*"', source)
+        self.assertIn('Type: files; Name: "{app}\\{#MyAppExeName}"', source)
+        self.assertIn('Type: filesandordirs; Name: "{app}\\_internal"', source)
         self.assertLess(source.index("[InstallDelete]"), source.index("[Files]"))
 
 

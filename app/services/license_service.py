@@ -24,6 +24,11 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
 )
 
 from app.config import APP_DATA_DIR
+from app.services.backup_crypto_service import (
+    BackupSecurityError,
+    protect_local_security_state,
+    unprotect_local_security_state,
+)
 
 
 PRODUCT_CODE = (
@@ -51,6 +56,60 @@ LICENSE_PUBLIC_KEY_PATH = os.path.join(
 )
 
 MAX_LICENSE_FILE_BYTES = 64 * 1024
+TRUSTED_TIME_PATH = os.path.join(LICENSE_DIRECTORY, "last_trusted_time.json")
+TRUSTED_TIME_ROLLBACK_TOLERANCE_SECONDS = 300
+
+
+def _check_and_record_trusted_time(now_utc: datetime) -> str | None:
+    """Persist the latest observed UTC time and warn when the clock moves back."""
+    previous = None
+    state_warning = None
+    try:
+        with open(TRUSTED_TIME_PATH, "r", encoding="utf-8") as stream:
+            stored = json.load(stream)
+        protected = stored.get("protected_last_trusted_utc")
+        raw_time = (
+            unprotect_local_security_state(protected).decode("utf-8")
+            if protected
+            else stored.get("last_trusted_utc")
+        )
+        previous = _parse_utc_datetime(raw_time)
+    except (
+        FileNotFoundError,
+        OSError,
+        TypeError,
+        ValueError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+        BackupSecurityError,
+    ):
+        previous = None
+        if os.path.isfile(TRUSTED_TIME_PATH):
+            state_warning = "Warning: the saved trusted licence time is damaged or cannot be authenticated."
+
+    warning = state_warning
+    if previous is not None and (previous - now_utc).total_seconds() > TRUSTED_TIME_ROLLBACK_TOLERANCE_SECONDS:
+        warning = (
+            "Warning: the computer clock is earlier than the last trusted licence time "
+            f"({previous.isoformat().replace('+00:00', 'Z')}). Please correct the clock."
+        )
+
+    latest = max(now_utc, previous) if previous is not None else now_utc
+    try:
+        os.makedirs(LICENSE_DIRECTORY, exist_ok=True)
+        temporary_path = TRUSTED_TIME_PATH + ".tmp"
+        with open(temporary_path, "w", encoding="utf-8") as stream:
+            trusted_text = latest.isoformat().replace("+00:00", "Z")
+            json.dump(
+                {"protected_last_trusted_utc": protect_local_security_state(trusted_text.encode("utf-8"))},
+                stream,
+            )
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary_path, TRUSTED_TIME_PATH)
+    except OSError:
+        warning = warning or "Warning: the last trusted licence time could not be saved."
+    return warning
 
 
 def _read_windows_machine_guid() -> str:
@@ -721,12 +780,15 @@ def verify_installed_license() -> dict:
                 "license_payload": payload,
             }
 
+    trusted_time_warning = _check_and_record_trusted_time(datetime.now(timezone.utc))
     return {
         "success": True,
         "status": "licensed",
         "message": (
             "The software licence is valid."
+            + (f"\n\n{trusted_time_warning}" if trusted_time_warning else "")
         ),
+        "warning": trusted_time_warning,
         "activation_request_code": (
             activation_request_code
         ),

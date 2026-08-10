@@ -2522,6 +2522,53 @@ def pause_fee_records_after_drop(
             connection.close()
 
 
+def _audit_unpaid_fee_records_for_archive(cursor, student_id: int) -> None:
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS archived_fee_record_audit (
+            audit_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            original_fee_record_id INTEGER NOT NULL,
+            student_id INTEGER NOT NULL,
+            class_id INTEGER NOT NULL,
+            session_year TEXT NOT NULL,
+            fee_type TEXT NOT NULL,
+            month_name TEXT,
+            month_number INTEGER,
+            calendar_year INTEGER,
+            amount REAL NOT NULL,
+            original_status TEXT NOT NULL,
+            archived_at TEXT NOT NULL,
+            reason TEXT NOT NULL
+        )
+        """
+    )
+    cursor.execute(
+        """
+        INSERT INTO archived_fee_record_audit(
+            original_fee_record_id, student_id, class_id, session_year,
+            fee_type, month_name, month_number, calendar_year, amount,
+            original_status, archived_at, reason
+        )
+        SELECT id, student_id, class_id, session_year, fee_type, month_name,
+               month_number, year, amount, status, ?, ?
+        FROM student_fee_records
+        WHERE student_id=? AND status=?
+          AND NOT EXISTS (
+                SELECT 1 FROM fee_receipts AS receipts
+                INNER JOIN fee_payments AS payments ON payments.id=receipts.payment_id
+                WHERE receipts.student_fee_record_id=student_fee_records.id
+                  AND receipts.status='Paid' AND payments.payment_status='Completed'
+          )
+        """,
+        (
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "Student archived; unpaid operational row removed",
+            int(student_id),
+            FEE_STATUS_UNPAID,
+        ),
+    )
+
+
 def remove_unpaid_fee_records_for_archive(
     student_id: int,
     connection=None,
@@ -2533,6 +2580,7 @@ def remove_unpaid_fee_records_for_archive(
     cursor = connection.cursor()
 
     try:
+        _audit_unpaid_fee_records_for_archive(cursor, student_id)
         cursor.execute(
             """
             DELETE FROM student_fee_records
@@ -3770,7 +3818,7 @@ def _build_session_payment_history_snapshot(
     student_id: int,
     session_year: str,
 ) -> list[dict]:
-    """Capture the receipt's immutable April-March paid/waived history."""
+    """Capture all April-March paid/waived history, including this payment."""
     session_year = str(session_year or "").strip()
     try:
         session_start_year = int(session_year[:4])

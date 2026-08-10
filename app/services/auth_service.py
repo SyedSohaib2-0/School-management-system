@@ -14,6 +14,7 @@ import hashlib
 import hmac
 import re
 import secrets
+import time
 from datetime import datetime
 
 from app.database import get_connection
@@ -22,7 +23,7 @@ from app.database import get_connection
 AUTHENTICATION_SCHEMA_V10 = True
 
 ADMIN_USER_ID = 1
-PASSWORD_MINIMUM_LENGTH = 6
+PASSWORD_MINIMUM_LENGTH = 10
 PASSWORD_MAXIMUM_LENGTH = 128
 USERNAME_MINIMUM_LENGTH = 3
 USERNAME_MAXIMUM_LENGTH = 50
@@ -86,7 +87,73 @@ def validate_password(password: str) -> str:
             f"{PASSWORD_MAXIMUM_LENGTH} characters."
         )
 
+    if not re.search(r"[A-Z]", value) or not re.search(r"[a-z]", value) or not re.search(r"[0-9]", value) or not re.search(r"[^A-Za-z0-9]", value):
+        raise ValueError(
+            "Password must include an uppercase letter, a lowercase letter, "
+            "a number, and a special character."
+        )
+
     return value
+
+
+def _ensure_security_audit_tables(connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS authentication_throttle (
+            throttle_key TEXT PRIMARY KEY,
+            failure_count INTEGER NOT NULL DEFAULT 0,
+            locked_until_epoch INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS authentication_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_type TEXT NOT NULL,
+            outcome TEXT NOT NULL,
+            actor TEXT NOT NULL,
+            occurred_at TEXT NOT NULL,
+            details TEXT
+        )
+        """
+    )
+
+
+def _throttle_key(purpose: str, identity: str) -> str:
+    digest = hashlib.sha256(str(identity or "").strip().lower().encode("utf-8")).hexdigest()
+    return f"{purpose}:{digest}"
+
+
+def _is_throttled(connection, key: str) -> bool:
+    _ensure_security_audit_tables(connection)
+    row = connection.execute(
+        "SELECT locked_until_epoch FROM authentication_throttle WHERE throttle_key=?",
+        (key,),
+    ).fetchone()
+    return bool(row and int(row["locked_until_epoch"] or 0) > int(time.time()))
+
+
+def _record_auth_result(connection, key: str, *, succeeded: bool) -> None:
+    _ensure_security_audit_tables(connection)
+    now_epoch = int(time.time())
+    now_text = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if succeeded:
+        connection.execute("DELETE FROM authentication_throttle WHERE throttle_key=?", (key,))
+        return
+    row = connection.execute(
+        "SELECT failure_count FROM authentication_throttle WHERE throttle_key=?", (key,)
+    ).fetchone()
+    failures = int(row["failure_count"] or 0) + 1 if row else 1
+    lock_seconds = 300 if failures >= 5 else 0
+    connection.execute(
+        """INSERT INTO authentication_throttle(throttle_key,failure_count,locked_until_epoch,updated_at)
+           VALUES(?,?,?,?) ON CONFLICT(throttle_key) DO UPDATE SET
+           failure_count=excluded.failure_count, locked_until_epoch=excluded.locked_until_epoch,
+           updated_at=excluded.updated_at""",
+        (key, failures, now_epoch + lock_seconds, now_text),
+    )
 
 
 def normalize_cnic(cnic: str) -> str:
@@ -373,6 +440,10 @@ def authenticate_admin(
     )
 
     try:
+        throttle_key = _throttle_key("login", normalized_username)
+        if _is_throttled(connection, throttle_key):
+            connection.commit()
+            return False
         row = connection.execute(
             """
             SELECT username, password_digest
@@ -387,13 +458,22 @@ def authenticate_admin(
             ),
         ).fetchone()
 
-        if row is None:
-            return False
-
-        return _verify_secret(
-            str(password or ""),
-            str(row["password_digest"]),
+        authenticated = bool(row) and _verify_secret(
+            str(password or ""), str(row["password_digest"])
         )
+        _record_auth_result(connection, throttle_key, succeeded=authenticated)
+        connection.execute(
+            "INSERT INTO authentication_events(event_type,outcome,actor,occurred_at,details) VALUES(?,?,?,?,?)",
+            (
+                "login",
+                "success" if authenticated else "failure",
+                normalized_username,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                None,
+            ),
+        )
+        connection.commit()
+        return authenticated
 
     finally:
         connection.close()
@@ -424,6 +504,10 @@ def reset_admin_password(
 
     try:
         connection.execute("BEGIN IMMEDIATE;")
+        throttle_key = _throttle_key("password_recovery", cnic)
+        if _is_throttled(connection, throttle_key):
+            connection.commit()
+            return False
 
         row = connection.execute(
             """
@@ -436,7 +520,8 @@ def reset_admin_password(
         ).fetchone()
 
         if row is None:
-            connection.rollback()
+            _record_auth_result(connection, throttle_key, succeeded=False)
+            connection.commit()
             return False
 
         recovery_matches = _verify_secret(
@@ -445,7 +530,12 @@ def reset_admin_password(
         )
 
         if not recovery_matches:
-            connection.rollback()
+            _record_auth_result(connection, throttle_key, succeeded=False)
+            connection.execute(
+                "INSERT INTO authentication_events(event_type,outcome,actor,occurred_at,details) VALUES(?,?,?,?,?)",
+                ("password_reset", "failure", str(updated_by or "forgot_password"), datetime.now().strftime("%Y-%m-%d %H:%M:%S"), None),
+            )
+            connection.commit()
             return False
 
         now = datetime.now().strftime(
@@ -466,6 +556,11 @@ def reset_admin_password(
                 str(updated_by or "forgot_password"),
                 ADMIN_USER_ID,
             ),
+        )
+        _record_auth_result(connection, throttle_key, succeeded=True)
+        connection.execute(
+            "INSERT INTO authentication_events(event_type,outcome,actor,occurred_at,details) VALUES(?,?,?,?,?)",
+            ("password_reset", "success", str(updated_by or "forgot_password"), now, None),
         )
 
         connection.commit()
@@ -502,12 +597,22 @@ def change_admin_password(
             (ADMIN_USER_ID, normalized_username),
         ).fetchone()
         if row is None:
-            connection.rollback()
+            _ensure_security_audit_tables(connection)
+            connection.execute(
+                "INSERT INTO authentication_events(event_type,outcome,actor,occurred_at,details) VALUES(?,?,?,?,?)",
+                ("password_change", "failure", normalized_username, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Credential not found"),
+            )
+            connection.commit()
             return False
 
         original_digest = str(row["password_digest"])
         if not _verify_secret(current_password, original_digest):
-            connection.rollback()
+            _ensure_security_audit_tables(connection)
+            connection.execute(
+                "INSERT INTO authentication_events(event_type,outcome,actor,occurred_at,details) VALUES(?,?,?,?,?)",
+                ("password_change", "failure", normalized_username, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Current password rejected"),
+            )
+            connection.commit()
             return False
 
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -535,6 +640,11 @@ def change_admin_password(
             raise RuntimeError(
                 "Authentication conflict: the password changed during this operation."
             )
+        _ensure_security_audit_tables(connection)
+        connection.execute(
+            "INSERT INTO authentication_events(event_type,outcome,actor,occurred_at,details) VALUES(?,?,?,?,?)",
+            ("password_change", "success", normalized_username, now, None),
+        )
         connection.commit()
         return True
     except Exception:

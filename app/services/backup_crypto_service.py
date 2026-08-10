@@ -268,13 +268,23 @@ def validate_recovery_password_policy(
     return True, "The recovery password meets the required policy."
 
 
-def _derive_recovery_root(password: str, recovery_salt: bytes) -> bytes:
+def _derive_recovery_root(
+    password: str,
+    recovery_salt: bytes,
+    *,
+    n: int = SCRYPT_N,
+    r: int = SCRYPT_R,
+    p: int = SCRYPT_P,
+) -> bytes:
+    n, r, p = int(n), int(r), int(p)
+    if n < 2 ** 14 or n > 2 ** 20 or n & (n - 1) or not 1 <= r <= 32 or not 1 <= p <= 16:
+        raise BackupSecurityError("The backup contains unsupported password-security parameters.")
     return Scrypt(
         salt=recovery_salt,
         length=32,
-        n=SCRYPT_N,
-        r=SCRYPT_R,
-        p=SCRYPT_P,
+        n=n,
+        r=r,
+        p=p,
     ).derive(password.encode("utf-8"))
 
 
@@ -330,6 +340,9 @@ def _validate_key_store_v2_password(
     verifier_root = _derive_recovery_root(
         recovery_password,
         key_store_salt,
+        n=key_store.get("scrypt_n", SCRYPT_N),
+        r=key_store.get("scrypt_r", SCRYPT_R),
+        p=key_store.get("scrypt_p", SCRYPT_P),
     )
     expected_verifier = _b64decode(
         key_store["recovery_verifier"],
@@ -774,7 +787,13 @@ def _unwrap_master_key_from_password(
     recovery_password: str,
 ) -> bytes:
     recovery_salt = _b64decode(header["recovery_salt"], "recovery_salt")
-    recovery_root = _derive_recovery_root(recovery_password, recovery_salt)
+    recovery_root = _derive_recovery_root(
+        recovery_password,
+        recovery_salt,
+        n=header.get("scrypt_n", SCRYPT_N),
+        r=header.get("scrypt_r", SCRYPT_R),
+        p=header.get("scrypt_p", SCRYPT_P),
+    )
     expected_verifier = _b64decode(
         header["recovery_verifier"],
         "recovery_verifier",
@@ -833,6 +852,24 @@ def protect_master_key_for_pending_restore(master_key: bytes) -> str:
     if len(master_key) != 32:
         raise BackupSecurityError("The pending restore key has an invalid length.")
     return _b64encode(_protect_bytes(master_key))
+
+
+def unprotect_pending_restore_key(protected_key: str) -> bytes:
+    """Authenticate and recover a DPAPI-protected pending-restore key."""
+    key = _unprotect_bytes(_b64decode(protected_key, "pending_restore_key"))
+    if len(key) != 32:
+        raise BackupSecurityError("The pending restore key has an invalid length.")
+    return key
+
+
+def protect_local_security_state(value: bytes) -> str:
+    """Protect small local security metadata with the current Windows account."""
+    return _b64encode(_protect_bytes(bytes(value)))
+
+
+def unprotect_local_security_state(value: str) -> bytes:
+    """Recover small DPAPI-protected local security metadata."""
+    return _unprotect_bytes(_b64decode(value, "protected_security_state"))
 
 
 def _collect_database_manifest(
@@ -1356,17 +1393,25 @@ def adopt_backup_security_from_recovery(
     recovery_password: str,
     master_key: bytes,
 ) -> dict:
-    """Adopt a recovered key only when this computer has no key store."""
+    """Adopt a recovered key when the local key store is absent or unusable."""
     if os.path.isfile(KEY_STORE_PATH):
-        return {
-            "success": True,
-            "adopted": False,
-            "message": "Existing local backup encryption configuration was retained.",
-        }
+        current_status = get_backup_security_status()
+        if current_status.get("usable", False):
+            return {
+                "success": True,
+                "adopted": False,
+                "message": "Existing usable backup encryption configuration was retained.",
+            }
     try:
         header = read_encrypted_backup_header(backup_path)
         recovery_salt = _b64decode(header["recovery_salt"], "recovery_salt")
-        recovery_root = _derive_recovery_root(recovery_password, recovery_salt)
+        recovery_root = _derive_recovery_root(
+            recovery_password,
+            recovery_salt,
+            n=header.get("scrypt_n", SCRYPT_N),
+            r=header.get("scrypt_r", SCRYPT_R),
+            p=header.get("scrypt_p", SCRYPT_P),
+        )
         expected_verifier = _b64decode(
             header["recovery_verifier"],
             "recovery_verifier",
@@ -1388,6 +1433,9 @@ def adopt_backup_security_from_recovery(
         key_store["adopted_at"] = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S"
         )
+        if os.path.isfile(KEY_STORE_PATH):
+            damaged_path = KEY_STORE_PATH + datetime.now().strftime(".damaged_%Y%m%d_%H%M%S")
+            os.replace(KEY_STORE_PATH, damaged_path)
         _atomic_write_json(KEY_STORE_PATH, key_store)
         return {
             "success": True,
@@ -1403,3 +1451,21 @@ def adopt_backup_security_from_recovery(
             "message": f"Recovered backup security could not be adopted: {error}",
         }
 
+
+def recover_backup_security_from_backup(backup_path: str, recovery_password: str) -> dict:
+    """Repair a missing/damaged local key store using a valid encrypted backup."""
+    try:
+        if not is_encrypted_backup(backup_path):
+            raise BackupSecurityError("Select an encrypted .hmsbackup file.")
+        master_key = resolve_master_key_for_backup(
+            backup_path, recovery_password=recovery_password
+        )
+        return adopt_backup_security_from_recovery(
+            backup_path, recovery_password, master_key
+        )
+    except (OSError, TypeError, ValueError, BackupSecurityError) as error:
+        return {
+            "success": False,
+            "adopted": False,
+            "message": f"Backup security could not be recovered: {error}",
+        }

@@ -320,7 +320,9 @@ class AdditionalBugFixV9ScopeTests(unittest.TestCase):
                 mock.patch.object(auth, "_hash_secret", return_value="new-digest"),
             ):
                 with self.assertRaisesRegex(RuntimeError, "Authentication conflict"):
-                    auth.change_admin_password("admin", "oldpass", "newpass")
+                    auth.change_admin_password(
+                        "admin", "oldpass", "NewSecure@123"
+                    )
             self.assertEqual(fake.sql[0][0], "BEGIN IMMEDIATE;")
             self.assertTrue(fake.assert_conditional)
             self.assertTrue(fake.rolled_back)

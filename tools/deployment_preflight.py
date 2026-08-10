@@ -74,10 +74,16 @@ def run_preflight() -> dict:
             _record(results, "pass", "application_version", f"Application version is {actual}")
         else:
             _record(results, "error", "application_version", f"Expected {EXPECTED_APPLICATION_VERSION}, found {actual}")
-        if "[InstallDelete]" in installer and 'Name: "{app}\\*"' in installer:
-            _record(results, "pass", "stale_install_cleanup", "Installer removes stale program files before upgrade")
+        safe_cleanup = (
+            "[InstallDelete]" in installer
+            and 'Name: "{app}\\*"' not in installer
+            and 'Name: "{app}\\{#MyAppExeName}"' in installer
+            and 'Name: "{app}\\_internal"' in installer
+        )
+        if safe_cleanup:
+            _record(results, "pass", "stale_install_cleanup", "Installer selectively removes application-owned program files before upgrade")
         else:
-            _record(results, "error", "stale_install_cleanup", "Installer lacks stale program-file cleanup")
+            _record(results, "error", "stale_install_cleanup", "Installer cleanup is missing or could erase unrelated files")
 
     spec_path = ROOT / "HiraModelSchool.spec"
     if spec_path.is_file():

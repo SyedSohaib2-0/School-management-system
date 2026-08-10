@@ -66,6 +66,7 @@ from app.services.backup_crypto_service import (
     upgrade_backup_security,
     get_backup_security_status,
     is_encrypted_backup,
+    recover_backup_security_from_backup,
 )
 
 
@@ -359,13 +360,10 @@ class BackupManagementPage(QWidget):
             f"{status.get('message', '')}"
         )
         self.configure_backup_encryption_button.setText(
-            "Configure Encryption"
+            "Recover from Backup" if status.get("configured", False) else "Configure Encryption"
         )
         self.configure_backup_encryption_button.setEnabled(
-            not status.get(
-                "configured",
-                False,
-            )
+            True
         )
 
     def _configure_backup_encryption(
@@ -412,15 +410,25 @@ class BackupManagementPage(QWidget):
             "configured",
             False,
         ):
-            QMessageBox.critical(
-                self,
-                "Backup Key Unavailable",
-                status.get(
-                    "message",
-                    "The Windows-protected backup key is unavailable.",
-                ),
+            backup_path, _ = QFileDialog.getOpenFileName(
+                self, "Select an Existing Encrypted Backup", "", "Hira Backup (*.hmsbackup)"
             )
-            return False
+            if not backup_path:
+                return False
+            password, accepted = QInputDialog.getText(
+                self, "Recover Backup Encryption", "Enter the Backup Recovery Password:",
+                QLineEdit.EchoMode.Password,
+            )
+            if not accepted:
+                return False
+            result = recover_backup_security_from_backup(backup_path, password)
+            password = None
+            if not result.get("success", False):
+                QMessageBox.critical(self, "Recovery Failed", result.get("message", "Backup security could not be recovered."))
+                return False
+            QMessageBox.information(self, "Backup Encryption Recovered", result.get("message", "Backup encryption was recovered."))
+            self._refresh_backup_security_status()
+            return True
 
         dialog = QDialog(
             self

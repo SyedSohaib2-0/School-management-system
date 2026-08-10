@@ -12,6 +12,7 @@ import os
 import json
 import threading
 import time
+import tempfile
 from datetime import datetime
 
 from app.config import BACKUPS_DIR
@@ -22,6 +23,9 @@ SHUTDOWN_BACKUP_TIMEOUT_SECONDS = 30.0
 SHUTDOWN_BACKUP_POLL_SECONDS = 0.05
 RETRY_DELAYS_SECONDS = (60.0, 300.0, 900.0, 3600.0)
 RETRY_STATE_PATH = os.path.join(BACKUPS_DIR, "automatic_backup_retry_state.json")
+RETRY_STATE_FALLBACK_PATH = os.path.join(
+    tempfile.gettempdir(), "HiraModelSchool", "automatic_backup_retry_state.json"
+)
 
 
 _scheduler_lock = threading.RLock()
@@ -46,6 +50,8 @@ def _persist_retry_state_locked() -> None:
         if not _backup_pending:
             if os.path.isfile(RETRY_STATE_PATH):
                 os.remove(RETRY_STATE_PATH)
+            if os.path.isfile(RETRY_STATE_FALLBACK_PATH):
+                os.remove(RETRY_STATE_FALLBACK_PATH)
             return
         temporary = RETRY_STATE_PATH + ".tmp"
         with open(temporary, "w", encoding="utf-8") as output:
@@ -66,8 +72,35 @@ def _persist_retry_state_locked() -> None:
             output.flush()
             os.fsync(output.fileno())
         os.replace(temporary, RETRY_STATE_PATH)
+        if os.path.isfile(RETRY_STATE_FALLBACK_PATH):
+            os.remove(RETRY_STATE_FALLBACK_PATH)
     except OSError as error:
         _write_scheduler_error(f"Could not persist backup retry state: {error}")
+        try:
+            os.makedirs(os.path.dirname(RETRY_STATE_FALLBACK_PATH), exist_ok=True)
+            if not _backup_pending:
+                if os.path.isfile(RETRY_STATE_FALLBACK_PATH):
+                    os.remove(RETRY_STATE_FALLBACK_PATH)
+                return
+            temporary = RETRY_STATE_FALLBACK_PATH + ".tmp"
+            with open(temporary, "w", encoding="utf-8") as output:
+                json.dump(
+                    {
+                        "pending": True,
+                        "destinations": sorted(_pending_destinations) if _pending_destinations is not None else None,
+                        "retry_attempt": int(_retry_attempt),
+                        "updated_at": datetime.now().isoformat(timespec="seconds"),
+                    },
+                    output,
+                    indent=2,
+                )
+                output.flush()
+                os.fsync(output.fileno())
+            os.replace(temporary, RETRY_STATE_FALLBACK_PATH)
+        except OSError as fallback_error:
+            _write_scheduler_error(
+                f"Could not persist backup retry state to fallback storage: {fallback_error}"
+            )
 
 
 def _retry_delay(attempt: int) -> float:
@@ -493,16 +526,21 @@ def _restore_retry_state_after_restart() -> None:
     global _backup_pending
     global _pending_destinations
     global _retry_attempt
+    retry_state_path = (
+        RETRY_STATE_PATH
+        if os.path.isfile(RETRY_STATE_PATH)
+        else RETRY_STATE_FALLBACK_PATH
+    )
     try:
-        if not os.path.isfile(RETRY_STATE_PATH):
+        if not os.path.isfile(retry_state_path):
             return
-        with open(RETRY_STATE_PATH, "r", encoding="utf-8") as source:
+        with open(retry_state_path, "r", encoding="utf-8") as source:
             state = json.load(source)
         if not isinstance(state, dict):
             raise ValueError("Backup retry state must be a JSON object.")
         pending_value = state.get("pending")
         if pending_value is False:
-            os.remove(RETRY_STATE_PATH)
+            os.remove(retry_state_path)
             return
         if pending_value is not True:
             raise ValueError("Backup retry state is missing its pending flag.")
@@ -540,11 +578,11 @@ def _restore_retry_state_after_restart() -> None:
         # A malformed retry-state document otherwise fails on every startup
         # forever. Preserve it for diagnosis, then allow the scheduler to
         # continue with a clean state.
-        if os.path.isfile(RETRY_STATE_PATH):
+        if os.path.isfile(retry_state_path):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-            quarantine_path = f"{RETRY_STATE_PATH}.corrupt_{timestamp}"
+            quarantine_path = f"{retry_state_path}.corrupt_{timestamp}"
             try:
-                os.replace(RETRY_STATE_PATH, quarantine_path)
+                os.replace(retry_state_path, quarantine_path)
                 _write_scheduler_error(
                     f"Damaged backup retry state was quarantined as {quarantine_path}."
                 )
@@ -552,4 +590,3 @@ def _restore_retry_state_after_restart() -> None:
                 _write_scheduler_error(
                     f"Could not quarantine damaged backup retry state: {quarantine_error}"
                 )
-

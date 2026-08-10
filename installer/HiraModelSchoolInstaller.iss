@@ -54,8 +54,10 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 
 [InstallDelete]
 ; Program data and the licence live under LocalAppData\HiraModelSchool, not here.
-; Clean stale binaries from an older one-folder build before copying the new build.
-Type: filesandordirs; Name: "{app}\*"
+; Remove only application-owned PyInstaller artifacts. Never erase unrelated
+; files when a customer selected a pre-existing folder as the install path.
+Type: files; Name: "{app}\{#MyAppExeName}"
+Type: filesandordirs; Name: "{app}\_internal"
 
 [Files]
 Source: "..\dist\HiraModelSchool\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

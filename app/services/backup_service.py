@@ -7,6 +7,8 @@ consistent snapshot can be created while the application is running.
 """
 
 import json
+import hashlib
+import hmac
 import os
 import re
 import shutil
@@ -14,6 +16,7 @@ import stat
 import tempfile
 import socket
 import sqlite3
+import secrets
 from datetime import datetime
 from uuid import uuid4
 
@@ -42,6 +45,7 @@ from app.services.backup_crypto_service import (
     BACKUP_INSPECTION_CORRUPTED_HEADER,
     BACKUP_INSPECTION_UNSUPPORTED_FORMAT,
     protect_master_key_for_pending_restore,
+    unprotect_pending_restore_key,
     validate_encrypted_backup,
     validate_encrypted_backup_detailed,
     BACKUP_INSPECTION_AUTHENTICATION_FAILED,
@@ -51,6 +55,31 @@ from app.services.backup_crypto_service import (
 BACKUP_FILE_PREFIX = "school_backup"
 BACKUP_FILE_EXTENSION = ENCRYPTED_BACKUP_EXTENSION
 LEGACY_BACKUP_FILE_EXTENSION = LEGACY_BACKUP_EXTENSION
+
+
+def _sign_pending_restore_request(request: dict) -> dict:
+    signed = dict(request)
+    key = secrets.token_bytes(32)
+    signed["request_auth_key"] = protect_master_key_for_pending_restore(key)
+    payload = json.dumps(signed, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    signed["request_authentication"] = hmac.new(key, payload, hashlib.sha256).hexdigest()
+    return signed
+
+
+def _pending_restore_request_is_authentic(request: dict) -> bool:
+    supplied = str(request.get("request_authentication") or "")
+    protected_key = str(request.get("request_auth_key") or "")
+    if len(supplied) != 64 or not protected_key:
+        return False
+    unsigned = dict(request)
+    unsigned.pop("request_authentication", None)
+    try:
+        key = unprotect_pending_restore_key(protected_key)
+        payload = json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        expected = hmac.new(key, payload, hashlib.sha256).hexdigest()
+        return hmac.compare_digest(supplied, expected)
+    except Exception:
+        return False
 
 INTERNAL_BACKUP_DIRECTORY = os.path.join(
     BACKUPS_DIR,
@@ -104,6 +133,10 @@ PENDING_RESTORE_DATABASE_PATH = os.path.join(
 PENDING_RESTORE_ENCRYPTED_PATH = os.path.join(
     PENDING_RESTORE_DIRECTORY,
     "pending_restore.hmsbackup",
+)
+PENDING_RESTORE_COMPLETION_PATH = os.path.join(
+    PENDING_RESTORE_DIRECTORY,
+    "pending_restore.completed.json",
 )
 
 RESTORE_QUARANTINE_DIRECTORY = os.path.join(
@@ -613,7 +646,12 @@ def create_backup_in_destination(
                 "backup_path": None,
             }
         finally:
-            shutil.rmtree(verification_directory, ignore_errors=True)
+            try:
+                shutil.rmtree(verification_directory)
+            except OSError as error:
+                raise RuntimeError(
+                    f"Plaintext backup verification files could not be removed: {error}"
+                ) from error
 
         retention_result = apply_backup_retention(
             destination_directory,
@@ -658,11 +696,13 @@ def create_backup_in_destination(
             "encrypted": True,
         }
     finally:
-        try:
-            if os.path.isfile(snapshot_path):
+        if os.path.isfile(snapshot_path):
+            try:
                 os.remove(snapshot_path)
-        except OSError:
-            pass
+            except OSError as error:
+                raise RuntimeError(
+                    f"Plaintext backup snapshot could not be removed: {error}"
+                ) from error
 
 
 def run_automatic_backups(destination_names=None) -> dict:
@@ -1904,6 +1944,7 @@ def stage_database_restore(
             "target_restore_id": target_restore_id,
             "pending_protected_master_key": protected_pending_master_key,
         }
+        restore_request = _sign_pending_restore_request(restore_request)
         with open(temporary_request_path, "w", encoding="utf-8") as request_file:
             json.dump(restore_request, request_file, indent=4)
             request_file.flush()
@@ -1954,13 +1995,31 @@ def _quarantine_invalid_pending_restore(
         RESTORE_QUARANTINE_DIRECTORY,
         timestamp,
     )
-    os.makedirs(quarantine_path, exist_ok=True)
+    try:
+        os.makedirs(quarantine_path, exist_ok=True)
+    except OSError as error:
+        return {
+            "success": False,
+            "restore_processed": False,
+            "restore_quarantined": False,
+            "startup_warning": True,
+            "message": (
+                "The invalid pending restore could not be quarantined. "
+                "The live database was not changed.\n\n"
+                f"Technical details: {error}"
+            ),
+        }
 
     moved_paths = []
     move_failures = []
     pending_root = os.path.realpath(PENDING_RESTORE_DIRECTORY)
     if os.path.isdir(PENDING_RESTORE_DIRECTORY):
-        for entry_name in sorted(os.listdir(PENDING_RESTORE_DIRECTORY)):
+        try:
+            pending_entries = sorted(os.listdir(PENDING_RESTORE_DIRECTORY))
+        except OSError as error:
+            pending_entries = []
+            move_failures.append(f"Could not inspect pending restore artifacts: {error}")
+        for entry_name in pending_entries:
             source_path = os.path.join(PENDING_RESTORE_DIRECTORY, entry_name)
             try:
                 resolved_source = os.path.realpath(source_path)
@@ -2001,8 +2060,12 @@ def _quarantine_invalid_pending_restore(
     if move_failures:
         report_lines.append("Quarantine warnings:")
         report_lines.extend(f"- {message}" for message in move_failures)
-    with open(report_path, "w", encoding="utf-8") as report_file:
-        report_file.write("\n".join(report_lines) + "\n")
+    try:
+        with open(report_path, "w", encoding="utf-8") as report_file:
+            report_file.write("\n".join(report_lines) + "\n")
+    except OSError as error:
+        move_failures.append(f"Could not write quarantine report: {error}")
+        report_path = None
 
     return {
         "success": True,
@@ -2013,7 +2076,9 @@ def _quarantine_invalid_pending_restore(
             "A pending restore request was invalid and has been quarantined.\n\n"
             "The existing school database was not changed.\n\n"
             f"Quarantine: {quarantine_path}"
+            + ("\n\nWarnings: " + "; ".join(move_failures) if move_failures else "")
         ),
+        "report_path": report_path,
         "restart_required": False,
         "quarantine_path": quarantine_path,
         "quarantine_report": report_path,
@@ -2110,6 +2175,40 @@ def process_pending_restore_before_startup() -> dict:
             "request_structure",
             source_paths=(PENDING_RESTORE_REQUEST_PATH,),
         )
+
+    if not _pending_restore_request_is_authentic(restore_request):
+        return _quarantine_invalid_pending_restore(
+            "The pending restore request failed authentication and may have been altered.",
+            "request_authentication",
+            source_paths=(PENDING_RESTORE_REQUEST_PATH,),
+        )
+
+    try:
+        with open(PENDING_RESTORE_COMPLETION_PATH, "r", encoding="utf-8") as completed_file:
+            completed_request = json.load(completed_file)
+    except (FileNotFoundError, OSError, TypeError, ValueError, json.JSONDecodeError):
+        completed_request = {}
+    if str(completed_request.get("request_id") or "") == str(restore_request.get("request_id") or ""):
+        cleanup_failures = []
+        for completed_path in (
+            PENDING_RESTORE_REQUEST_PATH,
+            PENDING_RESTORE_ENCRYPTED_PATH,
+            PENDING_RESTORE_DATABASE_PATH,
+            PENDING_RESTORE_COMPLETION_PATH,
+        ):
+            try:
+                if os.path.isfile(completed_path):
+                    os.remove(completed_path)
+            except OSError as error:
+                cleanup_failures.append(f"{completed_path}: {error}")
+        return {
+            "success": True,
+            "restore_processed": False,
+            "startup_warning": bool(cleanup_failures),
+            "message": "The restore was already completed; leftover staging files were cleaned."
+            + (" Cleanup warnings: " + "; ".join(cleanup_failures) if cleanup_failures else ""),
+            "restart_required": False,
+        }
 
     backup_format = str(
         restore_request.get("backup_format", "legacy") or ""
@@ -2263,23 +2362,34 @@ def process_pending_restore_before_startup() -> dict:
                 save_restore_state(previous_restore_state)
             raise
 
+        completion_temporary_path = PENDING_RESTORE_COMPLETION_PATH + ".tmp"
+        with open(completion_temporary_path, "w", encoding="utf-8") as completion_file:
+            json.dump({"request_id": restore_request.get("request_id")}, completion_file)
+            completion_file.flush()
+            os.fsync(completion_file.fileno())
+        os.replace(completion_temporary_path, PENDING_RESTORE_COMPLETION_PATH)
+
+        cleanup_failures = []
         for completed_path in (
             PENDING_RESTORE_REQUEST_PATH,
             PENDING_RESTORE_ENCRYPTED_PATH,
             PENDING_RESTORE_DATABASE_PATH,
+            PENDING_RESTORE_COMPLETION_PATH,
         ):
             try:
                 if os.path.isfile(completed_path):
                     os.remove(completed_path)
-            except OSError:
-                pass
+            except OSError as error:
+                cleanup_failures.append(f"{completed_path}: {error}")
 
         return {
             "success": True,
             "restore_processed": True,
+            "startup_warning": bool(cleanup_failures),
             "message": (
                 "The pending database restore was completed successfully before "
                 "startup."
+                + (" Cleanup warnings: " + "; ".join(cleanup_failures) if cleanup_failures else "")
             ),
             "restart_required": False,
             "pre_restore_backup_path": pre_restore_backup_path,

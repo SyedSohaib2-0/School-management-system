@@ -255,7 +255,11 @@ def save_backup_settings(settings: dict) -> dict:
 
 def load_backup_settings() -> dict:
     """Load settings, recovering the previous valid document when possible."""
-    os.makedirs(os.path.dirname(SETTINGS_FILE_PATH), exist_ok=True)
+    try:
+        os.makedirs(os.path.dirname(SETTINGS_FILE_PATH), exist_ok=True)
+    except OSError as error:
+        logger.error("Backup settings directory is unavailable: %s", error)
+        return normalise_backup_settings(DEFAULT_BACKUP_SETTINGS)
 
     if os.path.isfile(SETTINGS_FILE_PATH):
         try:
@@ -282,7 +286,10 @@ def load_backup_settings() -> dict:
             _quarantine_damaged_file(SETTINGS_PREVIOUS_FILE_PATH)
 
     defaults = normalise_backup_settings(DEFAULT_BACKUP_SETTINGS)
-    _write_settings_file(SETTINGS_FILE_PATH, defaults)
+    try:
+        _write_settings_file(SETTINGS_FILE_PATH, defaults)
+    except OSError as error:
+        logger.error("Default backup settings could not be persisted: %s", error)
     return defaults
 
 

@@ -145,7 +145,7 @@ def _session_history_html(data: dict) -> str:
 
     session = escape(str(data.get("session_year") or "-"))
     return (
-        f"<div class='history-title'>Fee Payment History — Session {session}</div>"
+        f"<div class='history-title'>Fee Status History — Session {session}</div>"
         "<table class='history'><tr>"
         + "".join(headers)
         + "</tr><tr>"
