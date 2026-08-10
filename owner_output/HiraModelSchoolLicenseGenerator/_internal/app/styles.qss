@@ -1,0 +1,108 @@
+/* Global stylesheet for the whole application. */
+
+QWidget {
+    background-color: #F5F6FA;
+    font-family: Segoe UI;
+    font-size: 14px;
+    color: #2C3E50;
+}
+
+/* Main dashboard title */
+QLabel#pageTitle {
+    font-size: 22px;
+    font-weight: bold;
+    color: #1A2A40;
+    padding: 10px 0px;
+}
+
+/* Sub-section headings (e.g. "Active Students" table heading) */
+QLabel#sectionHeading {
+    font-size: 16px;
+    font-weight: bold;
+    color: #1A2A40;
+    padding-top: 6px;
+}
+
+/* Read-only generated class name preview */
+QLabel#generatedClassName {
+    font-weight: bold;
+    color: #2F6FED;
+}
+
+/* Standard buttons */
+QPushButton {
+    background-color: #2F6FED;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 18px;
+    font-size: 14px;
+}
+
+QPushButton:hover {
+    background-color: #1E5AD1;
+}
+
+QPushButton:pressed {
+    background-color: #16439E;
+}
+
+/* Secondary / back buttons */
+QPushButton#secondaryButton {
+    background-color: #B0B7C3;
+    color: #1A2A40;
+}
+
+QPushButton#secondaryButton:hover {
+    background-color: #98A0AE;
+}
+
+/* Input fields */
+QLineEdit, QComboBox, QDateEdit, QTimeEdit {
+    background-color: white;
+    border: 1px solid #C9CED6;
+    border-radius: 4px;
+    padding: 6px;
+}
+
+/* Tables */
+QTableWidget {
+    background-color: white;
+    gridline-color: #E1E4E8;
+    border: 1px solid #E1E4E8;
+}
+
+QHeaderView::section {
+    background-color: #EDEFF3;
+    padding: 6px;
+    border: none;
+    font-weight: bold;
+}
+
+/* KPI cards (Class Management) */
+QFrame#kpiCard {
+    background-color: white;
+    border: 1px solid #E1E4E8;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+QFrame#kpiCard[selected="true"] {
+    border: 2px solid #2F6FED;
+    background-color: #EAF1FE;
+}
+
+QLabel#kpiCount {
+    font-size: 22px;
+    font-weight: bold;
+    color: #1A2A40;
+}
+/* Inline warning banner (e.g. "class already promoted recently") */
+QLabel#warningBanner {
+    background-color: #FFF3CD;
+    color: #7A5B00;
+    border: 1px solid #FFE08A;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-weight: bold;
+}

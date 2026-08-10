@@ -1,0 +1,19 @@
+{
+    "version": 1,
+    "product_code": "HIRA-MODEL-SCHOOL-MANAGEMENT-SYSTEM",
+    "algorithm": "ED25519-AES256-GCM",
+    "key_derivation": {
+        "algorithm": "SCRYPT",
+        "n": 32768,
+        "r": 8,
+        "p": 1,
+        "length": 32,
+        "salt": "q/pgVq1x1cOJKWNVRdFINA=="
+    },
+    "encryption": {
+        "algorithm": "AES-256-GCM",
+        "nonce": "1SMfHU4+roXTiWpU",
+        "ciphertext": "oUuZ71y7+InpkegKgD5V3z4WcMmMV3x0qRskIdVhKFTxwq2QsuPookJ5s551SQ5j"
+    },
+    "public_key_sha256": "e941a07684455872bda3805cefdc2dffb7a247f4d71b365bda9d4ebfda0468e6"
+}
