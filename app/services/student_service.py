@@ -2398,11 +2398,24 @@ def archive_eligible_dropped_students(
         reference.year,
     )
 
-    normalized_ids = {
-        int(student_id)
-        for student_id in (student_ids or [])
-        if student_id is not None
-    }
+    normalized_ids = (
+        None
+        if student_ids is None
+        else {
+            int(student_id)
+            for student_id in student_ids
+            if student_id is not None
+        }
+    )
+
+    if normalized_ids == set():
+        return {
+            "archived_count": 0,
+            "archived_student_ids": [],
+            "blocked_student_ids": [],
+            "configuration_blocked_student_ids": [],
+            "configuration_errors": {},
+        }
 
     owns_connection = connection is None
 
@@ -2417,13 +2430,14 @@ def archive_eligible_dropped_students(
             connection.execute("BEGIN IMMEDIATE")
 
         query = """
-            SELECT student_id, class_id, father_name, father_cnic
+            SELECT student_id, class_id, roll_number, released_roll_number,
+                   father_name, father_cnic
             FROM students
             WHERE student_status = ?
         """
         parameters = [STATUS_DROPPED]
 
-        if normalized_ids:
+        if normalized_ids is not None:
             placeholders = ",".join(
                 "?" for _ in normalized_ids
             )
@@ -2446,7 +2460,8 @@ def archive_eligible_dropped_students(
             student_id = int(row["student_id"])
             cursor.execute(
                 """
-                SELECT student_id, class_id, student_status, father_name, father_cnic
+                SELECT student_id, class_id, roll_number, released_roll_number,
+                       student_status, father_name, father_cnic
                 FROM students
                 WHERE student_id = ?
                 """,
@@ -2542,17 +2557,32 @@ def archive_eligible_dropped_students(
 
             if cursor.fetchone() is not None:
                 blocked_ids.append(student_id)
-                if owns_connection and normalized_ids and len(normalized_ids) == 1:
+                if owns_connection and len(normalized_ids) == 1:
                     raise ValueError(
                         "Student cannot be Archived because outstanding fee records exist."
                     )
                 continue
+
+            existing_released_roll = current_student["released_roll_number"]
+            if existing_released_roll is not None:
+                released_roll_number = int(existing_released_roll)
+            elif int(current_student["roll_number"]) > 0:
+                released_roll_number = int(current_student["roll_number"])
+            else:
+                raise ValueError(
+                    "The student's historical Roll Number cannot be determined "
+                    "for automatic archiving."
+                )
+
+            archived_roll_sentinel = -abs(student_id)
 
             cursor.execute(
                 """
                 UPDATE students
                 SET
                     student_status = ?,
+                    roll_number = ?,
+                    released_roll_number = ?,
                     updated_at = ?,
                     updated_by = ?
                 WHERE student_id = ?
@@ -2560,6 +2590,8 @@ def archive_eligible_dropped_students(
                 """,
                 (
                     STATUS_ARCHIVED,
+                    archived_roll_sentinel,
+                    released_roll_number,
                     now,
                     "automatic_archive",
                     student_id,

@@ -1780,9 +1780,19 @@ def stage_database_restore(
             "restart_required": False,
         }
 
-    path_valid, path_message, absolute_backup_path = validate_restore_source_path(
-        selected_backup_path
-    )
+    try:
+        path_valid, path_message, absolute_backup_path = (
+            validate_restore_source_path(selected_backup_path)
+        )
+    except (OSError, TypeError, ValueError, RuntimeError) as error:
+        return {
+            "success": False,
+            "message": (
+                "The restore source could not be checked safely.\n\n"
+                f"Technical details: {error}"
+            ),
+            "restart_required": False,
+        }
     if not path_valid:
         return {
             "success": False,
@@ -1790,8 +1800,6 @@ def stage_database_restore(
             "restart_required": False,
         }
 
-    os.makedirs(PENDING_RESTORE_DIRECTORY, exist_ok=True)
-    os.makedirs(ENCRYPTED_BACKUP_TEMP_DIRECTORY, exist_ok=True)
     encrypted_format = is_encrypted_backup(absolute_backup_path)
     staged_path = (
         PENDING_RESTORE_ENCRYPTED_PATH
@@ -1812,6 +1820,8 @@ def stage_database_restore(
     protected_pending_master_key = None
 
     try:
+        os.makedirs(PENDING_RESTORE_DIRECTORY, exist_ok=True)
+        os.makedirs(ENCRYPTED_BACKUP_TEMP_DIRECTORY, exist_ok=True)
         if encrypted_format:
             decrypt_result = decrypt_encrypted_backup_to_path(
                 absolute_backup_path,
@@ -2149,14 +2159,14 @@ def process_pending_restore_before_startup() -> dict:
     original_path = str(restore_request.get("original_backup_path", ""))
 
     database_directory = os.path.dirname(DATABASE_PATH)
-    os.makedirs(database_directory, exist_ok=True)
-    os.makedirs(ENCRYPTED_BACKUP_TEMP_DIRECTORY, exist_ok=True)
     temporary_live_database_path = os.path.join(
         database_directory,
         f"school_startup_restore_{uuid4().hex}.db",
     )
 
     try:
+        os.makedirs(database_directory, exist_ok=True)
+        os.makedirs(ENCRYPTED_BACKUP_TEMP_DIRECTORY, exist_ok=True)
         if backup_format == "encrypted":
             decrypt_result = decrypt_encrypted_backup_to_path(
                 expected_staged_path,
@@ -2292,4 +2302,3 @@ def process_pending_restore_before_startup() -> dict:
                 os.remove(temporary_live_database_path)
         except OSError:
             pass
-

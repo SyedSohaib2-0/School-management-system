@@ -1,13 +1,13 @@
 {
     "application_name":  "Hira Model School",
     "application_version":  "1.1.0",
-    "patch":  "V31 Secure Offline Customer Licence Separation",
+    "patch":  "V31 Deeper Technical Audit - Restore Error Boundaries and Released Roll Repair",
     "change_summary":  [
-                           "Removes the private licence generator and encrypted signing key from the customer application package.",
-                           "Adds a customer request-code and signed .lic import workflow.",
-                           "Adds a separate owner-only licence generator build and packaging isolation regression tests."
+                           "Repairs legacy released Dropped students whose invalid internal roll sentinel is zero.",
+                           "Strengthens student lifecycle validation so every released roll uses a unique negative internal sentinel.",
+                           "Returns controlled restore failures when source validation or restore working directories are unavailable."
                        ],
-    "generated_at_utc":  "2026-08-10T11:19:52.7877392Z",
+    "generated_at_utc":  "2026-08-10T12:13:59.9668278Z",
     "file_count":  140,
     "files":  [
                   {
@@ -37,8 +37,8 @@
                   },
                   {
                       "path":  "app/database.py",
-                      "sha256":  "5c4bf4e298c87d5be45f94fce126cec5e1d58f49c368bf8b2af337101228f105",
-                      "size_bytes":  135880
+                      "sha256":  "d865ab868a8dfca290d37dc9fc50464e106c1200240a83c4ea3a9dceb475ec40",
+                      "size_bytes":  137789
                   },
                   {
                       "path":  "app/licence_generator/__init__.py",
@@ -177,8 +177,8 @@
                   },
                   {
                       "path":  "app/schema_integrity.py",
-                      "sha256":  "1f3c4e000ad9ef98338078a00301dd6b59fd2b38f349e9fe90b5b63c7c13b897",
-                      "size_bytes":  138573
+                      "sha256":  "fcfb40716f757af14218bf4cd6cbad61f2b05f0a027c77ca42b2cf9bab20e1d1",
+                      "size_bytes":  139845
                   },
                   {
                       "path":  "app/services/__init__.py",
@@ -202,8 +202,8 @@
                   },
                   {
                       "path":  "app/services/backup_service.py",
-                      "sha256":  "089f84a0b4b58f2a2e178e3742fec41c9ccbf5e5a306504093fe9b95cc28ac7e",
-                      "size_bytes":  78478
+                      "sha256":  "8e585b435428403f77c9df7be58ca46ca60c9aea4ce2a88b40b331e3f4b9f5f1",
+                      "size_bytes":  78836
                   },
                   {
                       "path":  "app/services/backup_settings_service.py",
@@ -247,8 +247,8 @@
                   },
                   {
                       "path":  "app/services/license_service.py",
-                      "sha256":  "66d1e586d376197f00324207de8617f8e2e30a0edf7392b51ad392746405798b",
-                      "size_bytes":  26968
+                      "sha256":  "03e6f8999a45dce2108546dc4f93dcd9fb6b7040e95a81006e770aa84355ddb0",
+                      "size_bytes":  29049
                   },
                   {
                       "path":  "app/services/promotion_cycle_service.py",
@@ -292,8 +292,8 @@
                   },
                   {
                       "path":  "app/services/student_service.py",
-                      "sha256":  "dd131c6b9d668df6a95806469cbe99ab347bda27862f6c140d3e87a691caef27",
-                      "size_bytes":  128476
+                      "sha256":  "2d711ed37f8be2c921e44b1b1fb53110342c70bca7a5ae1bcbd716eb62383428",
+                      "size_bytes":  129670
                   },
                   {
                       "path":  "app/styles.qss",
@@ -482,8 +482,8 @@
                   },
                   {
                       "path":  "tests/regression/test_april_startup_archive_recovery_v24.py",
-                      "sha256":  "5491fc7ae4c5de7401386a3461af958641e855277fbba5d15db917a4e33a6ad7",
-                      "size_bytes":  7479
+                      "sha256":  "1464be7afa79ee7ec7c4323c1f427518de05749521799d756d3a2dd2b8c4eac5",
+                      "size_bytes":  13269
                   },
                   {
                       "path":  "tests/regression/test_backup_restore_regressions.py",
@@ -577,8 +577,8 @@
                   },
                   {
                       "path":  "tests/regression/test_further_technical_integrity_restore_backup_same_v31.py",
-                      "sha256":  "48f1986d798bf39e6c10ac0ed78dec930f42cb82afaf4bb48edbe0b77cdb5820",
-                      "size_bytes":  22172
+                      "sha256":  "2da9f6ade5501b03a183f52a227eea3c561429c261ac83ad0eb776541e456de3",
+                      "size_bytes":  24505
                   },
                   {
                       "path":  "tests/regression/test_individual_fee_reapplication_v27.py",
@@ -637,8 +637,8 @@
                   },
                   {
                       "path":  "tests/regression/test_secure_offline_licensing_regression.py",
-                      "sha256":  "b70012cb118602cc5398cd230a40c7256b21a72a395cd79ba937e90fe2da0507",
-                      "size_bytes":  1813
+                      "sha256":  "1b6fa3ad09b079d04471c849e327864dd427cbb46812f7abbf1abb6a47fb4a67",
+                      "size_bytes":  4358
                   },
                   {
                       "path":  "tests/regression/test_sibling_event_month_regressions.py",

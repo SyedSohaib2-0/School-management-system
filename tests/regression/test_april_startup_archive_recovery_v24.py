@@ -16,6 +16,144 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 class AprilStartupArchiveRecoveryV24Tests(unittest.TestCase):
+    def test_empty_archive_selection_is_a_no_op_not_archive_all(self):
+        with IsolatedApplication() as app:
+            class_id = insert_class(app, "1", "A")
+            student_id = self._prepare_dropped_student(
+                app,
+                class_id=class_id,
+                admission_number="H2400",
+                roll_number=1,
+            )
+
+            result = app.student_service.archive_eligible_dropped_students(
+                as_of=datetime(2027, 4, 1, 9, 0, 0),
+                student_ids=[],
+            )
+
+            self.assertEqual(result["archived_count"], 0)
+            self.assertEqual(result["archived_student_ids"], [])
+            self.assertEqual(
+                fetch_one(
+                    app,
+                    "SELECT student_status FROM students WHERE student_id=?",
+                    (student_id,),
+                )["student_status"],
+                "Dropped",
+            )
+
+    def test_same_schema_hotfix_releases_legacy_archived_positive_roll(self):
+        with IsolatedApplication() as app:
+            class_id = insert_class(app, "1", "A")
+            student_id = insert_student(
+                app,
+                class_id=class_id,
+                admission_number="H2399",
+                roll_number=7,
+                status="Archived",
+            )
+            connection = app.connect()
+            try:
+                migrated = app.database.run_schema_migrations(
+                    connection,
+                    app.database.CURRENT_SCHEMA_VERSION,
+                )
+                connection.commit()
+                self.assertEqual(migrated, app.database.CURRENT_SCHEMA_VERSION)
+                row = connection.execute(
+                    "SELECT roll_number, released_roll_number FROM students WHERE student_id=?",
+                    (student_id,),
+                ).fetchone()
+                self.assertEqual(row["roll_number"], -student_id)
+                self.assertEqual(row["released_roll_number"], 7)
+                valid, message = (
+                    app.database.schema_integrity.validate_student_roll_invariants(
+                        connection
+                    )
+                )
+                self.assertTrue(valid, message)
+            finally:
+                connection.close()
+
+    def test_same_schema_hotfix_clears_stale_released_roll_on_held_rolls(self):
+        with IsolatedApplication() as app:
+            class_id = insert_class(app, "1", "A")
+            active_id = insert_student(
+                app,
+                class_id=class_id,
+                admission_number="H2397",
+                roll_number=6,
+                status="Active",
+            )
+            dropped_id = insert_student(
+                app,
+                class_id=class_id,
+                admission_number="H2398",
+                roll_number=7,
+                status="Dropped",
+            )
+            connection = app.connect()
+            try:
+                connection.execute(
+                    "UPDATE students SET released_roll_number=99 WHERE student_id IN (?,?)",
+                    (active_id, dropped_id),
+                )
+                app.database.run_schema_migrations(
+                    connection,
+                    app.database.CURRENT_SCHEMA_VERSION,
+                )
+                connection.commit()
+                rows = connection.execute(
+                    "SELECT student_id,released_roll_number FROM students WHERE student_id IN (?,?)",
+                    (active_id, dropped_id),
+                ).fetchall()
+                self.assertTrue(all(row["released_roll_number"] is None for row in rows))
+                valid, message = (
+                    app.database.schema_integrity.validate_student_roll_invariants(
+                        connection
+                    )
+                )
+                self.assertTrue(valid, message)
+            finally:
+                connection.close()
+
+    def test_same_schema_hotfix_repairs_zero_released_dropped_roll(self):
+        with IsolatedApplication() as app:
+            class_id = insert_class(app, "1", "A")
+            student_id = insert_student(
+                app,
+                class_id=class_id,
+                admission_number="H2396",
+                roll_number=8,
+                status="Dropped",
+            )
+            connection = app.connect()
+            try:
+                connection.execute(
+                    "UPDATE students SET roll_number=0,released_roll_number=8 "
+                    "WHERE student_id=?",
+                    (student_id,),
+                )
+                app.database.run_schema_migrations(
+                    connection,
+                    app.database.CURRENT_SCHEMA_VERSION,
+                )
+                connection.commit()
+                row = connection.execute(
+                    "SELECT roll_number,released_roll_number FROM students WHERE student_id=?",
+                    (student_id,),
+                ).fetchone()
+                self.assertEqual(row["roll_number"], -student_id)
+                self.assertEqual(row["released_roll_number"], 8)
+                valid, message = (
+                    app.database.schema_integrity.validate_student_roll_invariants(
+                        connection
+                    )
+                )
+                self.assertTrue(valid, message)
+            finally:
+                connection.close()
+
     @staticmethod
     def _prepare_dropped_student(
         app,
@@ -174,6 +312,13 @@ class AprilStartupArchiveRecoveryV24Tests(unittest.TestCase):
                 )["student_status"],
                 "Archived",
             )
+            archived_roll = fetch_one(
+                app,
+                "SELECT roll_number, released_roll_number FROM students WHERE student_id=?",
+                (clear_student,),
+            )
+            self.assertEqual(archived_roll["roll_number"], -clear_student)
+            self.assertEqual(archived_roll["released_roll_number"], 1)
             self.assertEqual(
                 fetch_one(
                     app,

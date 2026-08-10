@@ -389,6 +389,63 @@ class FurtherTechnicalIntegrityRestoreBackupSameV31Tests(unittest.TestCase):
             self.assertEqual(app.database_path.read_bytes(), before)
             self.assertFalse(request_path.exists())
 
+    def test_restore_staging_reports_working_directory_permission_error(self):
+        with IsolatedApplication() as app:
+            external = configure_external_backup(app)
+            backup = app.backup_service.create_backup_in_destination(
+                str(external),
+                app.backup_service.SELECTED_FOLDER_BACKUP_PREFIX,
+                10,
+                "Directory failure regression",
+            )
+            self.assertTrue(backup["success"], backup)
+
+            with mock.patch.object(
+                app.backup_service,
+                "validate_restore_source_path",
+                return_value=(True, "Valid", backup["backup_path"]),
+            ):
+                with mock.patch.object(
+                    app.backup_service.os,
+                    "makedirs",
+                    side_effect=PermissionError("denied"),
+                ):
+                    result = app.backup_service.stage_database_restore(
+                        backup["backup_path"]
+                    )
+
+            self.assertFalse(result["success"], result)
+            self.assertFalse(result["restart_required"], result)
+            self.assertIn("denied", result["message"])
+
+    def test_pending_restore_reports_working_directory_permission_error(self):
+        with IsolatedApplication() as app:
+            external = configure_external_backup(app)
+            backup = app.backup_service.create_backup_in_destination(
+                str(external),
+                app.backup_service.SELECTED_FOLDER_BACKUP_PREFIX,
+                10,
+                "Startup directory failure regression",
+            )
+            self.assertTrue(backup["success"], backup)
+            staged = app.backup_service.stage_database_restore(
+                backup["backup_path"]
+            )
+            self.assertTrue(staged["success"], staged)
+
+            with mock.patch.object(
+                app.backup_service.os,
+                "makedirs",
+                side_effect=PermissionError("denied"),
+            ):
+                result = (
+                    app.backup_service.process_pending_restore_before_startup()
+                )
+
+            self.assertFalse(result["success"], result)
+            self.assertFalse(result["restore_processed"], result)
+            self.assertIn("denied", result["message"])
+
     def test_clock_rollback_protected_backup_counts_inside_retention_limit(self):
         with IsolatedApplication() as app:
             destination = app.root / "retention"

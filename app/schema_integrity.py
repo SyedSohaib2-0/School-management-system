@@ -1021,18 +1021,34 @@ def validate_student_roll_invariants(connection: sqlite3.Connection) -> tuple[bo
         operational = int(row[3])
         released = row[4]
         violation = None
-        if status == "Active" and operational <= 0:
-            violation = "Active student requires a positive operational roll."
+        if status == "Active" and (operational <= 0 or released is not None):
+            violation = (
+                "Active student requires a positive operational roll and no "
+                "released roll."
+            )
         elif status == "Coming Session":
             if operational >= 0 or released is not None:
                 violation = (
                     "Coming Session student requires a unique negative pending "
                     "sentinel and no released roll."
                 )
-        elif status in {"Dropped", "Archived"} and operational <= 0:
-            if released is None or int(released) <= 0:
+        elif status == "Archived":
+            if operational >= 0 or released is None or int(released) <= 0:
                 violation = (
-                    "Released Dropped/Archived student requires a unique negative "
+                    "Archived student requires a unique negative sentinel and "
+                    "a positive released roll."
+                )
+        elif status == "Dropped":
+            if operational > 0 and released is not None:
+                violation = (
+                    "Dropped student holding a positive roll cannot also have "
+                    "released-roll metadata."
+                )
+            elif operational <= 0 and (
+                operational == 0 or released is None or int(released) <= 0
+            ):
+                violation = (
+                    "Released Dropped student requires a unique negative "
                     "sentinel and a positive released roll."
                 )
         elif status in {"Graduated", "Partially Graduated"}:
@@ -2131,11 +2147,16 @@ INTEGRITY_TRIGGER_SQL = {
     "trg_students_roll_lifecycle_insert": """
         CREATE TRIGGER IF NOT EXISTS trg_students_roll_lifecycle_insert
         BEFORE INSERT ON students
-        WHEN (NEW.student_status='Active' AND NEW.roll_number<=0)
+        WHEN (NEW.student_status='Active' AND
+              (NEW.roll_number<=0 OR NEW.released_roll_number IS NOT NULL))
           OR (NEW.student_status='Coming Session' AND
               (NEW.roll_number>=0 OR NEW.released_roll_number IS NOT NULL))
-          OR (NEW.student_status IN ('Dropped','Archived') AND NEW.roll_number<=0
-              AND (NEW.released_roll_number IS NULL OR NEW.released_roll_number<=0))
+          OR (NEW.student_status='Archived' AND
+              (NEW.roll_number>=0 OR NEW.released_roll_number IS NULL OR NEW.released_roll_number<=0))
+          OR (NEW.student_status='Dropped' AND (
+              (NEW.roll_number>0 AND NEW.released_roll_number IS NOT NULL)
+              OR (NEW.roll_number<=0 AND
+                  (NEW.roll_number=0 OR NEW.released_roll_number IS NULL OR NEW.released_roll_number<=0))))
           OR (NEW.student_status IN ('Graduated','Partially Graduated')
               AND (NEW.roll_number>=0 OR NEW.released_roll_number IS NULL OR NEW.released_roll_number<=0))
         BEGIN SELECT RAISE(ABORT, 'Invalid student lifecycle roll state'); END
@@ -2143,11 +2164,16 @@ INTEGRITY_TRIGGER_SQL = {
     "trg_students_roll_lifecycle_update": """
         CREATE TRIGGER IF NOT EXISTS trg_students_roll_lifecycle_update
         BEFORE UPDATE OF student_status,roll_number,released_roll_number ON students
-        WHEN (NEW.student_status='Active' AND NEW.roll_number<=0)
+        WHEN (NEW.student_status='Active' AND
+              (NEW.roll_number<=0 OR NEW.released_roll_number IS NOT NULL))
           OR (NEW.student_status='Coming Session' AND
               (NEW.roll_number>=0 OR NEW.released_roll_number IS NOT NULL))
-          OR (NEW.student_status IN ('Dropped','Archived') AND NEW.roll_number<=0
-              AND (NEW.released_roll_number IS NULL OR NEW.released_roll_number<=0))
+          OR (NEW.student_status='Archived' AND
+              (NEW.roll_number>=0 OR NEW.released_roll_number IS NULL OR NEW.released_roll_number<=0))
+          OR (NEW.student_status='Dropped' AND (
+              (NEW.roll_number>0 AND NEW.released_roll_number IS NOT NULL)
+              OR (NEW.roll_number<=0 AND
+                  (NEW.roll_number=0 OR NEW.released_roll_number IS NULL OR NEW.released_roll_number<=0))))
           OR (NEW.student_status IN ('Graduated','Partially Graduated')
               AND (NEW.roll_number>=0 OR NEW.released_roll_number IS NULL OR NEW.released_roll_number<=0))
         BEGIN SELECT RAISE(ABORT, 'Invalid student lifecycle roll state'); END

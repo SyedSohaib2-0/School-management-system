@@ -125,6 +125,58 @@ def _release_completed_student_rolls(
     )
 
 
+def _release_legacy_archived_student_rolls(
+    connection: sqlite3.Connection,
+) -> None:
+    """Repair legacy Archived rows created before immediate roll release."""
+    if "released_roll_number" not in _table_columns(connection, "students"):
+        return
+    connection.execute(
+        """
+        UPDATE students
+        SET released_roll_number = roll_number,
+            roll_number = -ABS(student_id)
+        WHERE student_status = 'Archived'
+          AND roll_number > 0
+          AND released_roll_number IS NULL
+        """
+    )
+
+
+def _clear_stale_held_roll_release_metadata(
+    connection: sqlite3.Connection,
+) -> None:
+    """A positive held roll is current, so it cannot also be marked released."""
+    if "released_roll_number" not in _table_columns(connection, "students"):
+        return
+    connection.execute(
+        """
+        UPDATE students
+        SET released_roll_number = NULL
+        WHERE student_status IN ('Active', 'Dropped')
+          AND roll_number > 0
+          AND released_roll_number IS NOT NULL
+        """
+    )
+
+
+def _repair_zero_released_dropped_rolls(
+    connection: sqlite3.Connection,
+) -> None:
+    """Replace an invalid zero released-roll sentinel deterministically."""
+    if "released_roll_number" not in _table_columns(connection, "students"):
+        return
+    connection.execute(
+        """
+        UPDATE students
+        SET roll_number = -ABS(student_id)
+        WHERE student_status = 'Dropped'
+          AND roll_number = 0
+          AND released_roll_number > 0
+        """
+    )
+
+
 def _raise_for_duplicate_class_rolls(
     connection: sqlite3.Connection,
 ) -> None:
@@ -2708,6 +2760,13 @@ def run_schema_migrations(
         if not valid:
             raise RuntimeError(message)
         current_version = 23
+
+    # Same-schema hotfix: older automatic Archive paths could leave a positive
+    # roll occupied. This repair is deterministic only when no conflicting
+    # released-roll value exists; ambiguous rows remain for validation.
+    _release_legacy_archived_student_rolls(connection)
+    _clear_stale_held_roll_release_metadata(connection)
+    _repair_zero_released_dropped_rolls(connection)
 
     connection.create_function(
         "HMS_TEST_FIXTURE_MODE", 0, lambda: 0, deterministic=True

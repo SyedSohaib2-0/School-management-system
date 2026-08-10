@@ -50,6 +50,8 @@ LICENSE_PUBLIC_KEY_PATH = os.path.join(
     "license_public_key.pem",
 )
 
+MAX_LICENSE_FILE_BYTES = 64 * 1024
+
 
 def _read_windows_machine_guid() -> str:
     """Read the Windows MachineGuid without requiring administrator access."""
@@ -370,6 +372,33 @@ def verify_installed_license() -> dict:
             "activation_request_code": (
                 activation_request_code
             ),
+            "license_payload": None,
+        }
+
+    try:
+        installed_size = os.path.getsize(
+            LICENSE_FILE_PATH
+        )
+    except OSError as error:
+        return {
+            "success": False,
+            "status": "license_unreadable",
+            "message": (
+                "The installed licence file could not be inspected.\n\n"
+                f"Technical details: {error}"
+            ),
+            "activation_request_code": activation_request_code,
+            "license_payload": None,
+        }
+
+    if installed_size > MAX_LICENSE_FILE_BYTES:
+        return {
+            "success": False,
+            "status": "license_too_large",
+            "message": (
+                "The installed licence file is larger than the safe limit."
+            ),
+            "activation_request_code": activation_request_code,
             "license_payload": None,
         }
 
@@ -748,10 +777,28 @@ def install_license_file(
             ),
         }
 
-    os.makedirs(
-        LICENSE_DIRECTORY,
-        exist_ok=True,
-    )
+    try:
+        source_size = os.path.getsize(
+            source_path
+        )
+    except OSError as error:
+        return {
+            "success": False,
+            "status": "file_unreadable",
+            "message": (
+                "The selected licence file could not be inspected.\n\n"
+                f"Technical details: {error}"
+            ),
+        }
+
+    if source_size > MAX_LICENSE_FILE_BYTES:
+        return {
+            "success": False,
+            "status": "license_too_large",
+            "message": (
+                "The selected licence file is larger than the safe limit."
+            ),
+        }
 
     temporary_path = (
         f"{LICENSE_FILE_PATH}.tmp"
@@ -764,8 +811,13 @@ def install_license_file(
     had_previous_license = os.path.isfile(
         LICENSE_FILE_PATH
     )
+    replacement_installed = False
 
     try:
+        os.makedirs(
+            LICENSE_DIRECTORY,
+            exist_ok=True,
+        )
         for cleanup_path in (
             temporary_path,
             previous_license_path,
@@ -792,6 +844,7 @@ def install_license_file(
             temporary_path,
             LICENSE_FILE_PATH,
         )
+        replacement_installed = True
 
         verification_result = (
             verify_installed_license()
@@ -855,10 +908,7 @@ def install_license_file(
             ),
         }
 
-    except (
-        OSError,
-        shutil.Error,
-    ) as error:
+    except Exception as error:
         try:
             if os.path.isfile(
                 temporary_path
@@ -866,6 +916,23 @@ def install_license_file(
                 os.remove(
                     temporary_path
                 )
+            if replacement_installed:
+                if os.path.isfile(
+                    LICENSE_FILE_PATH
+                ):
+                    os.remove(
+                        LICENSE_FILE_PATH
+                    )
+                if (
+                    had_previous_license
+                    and os.path.isfile(
+                        previous_license_path
+                    )
+                ):
+                    os.replace(
+                        previous_license_path,
+                        LICENSE_FILE_PATH,
+                    )
         except OSError:
             pass
 
@@ -923,11 +990,6 @@ def install_generated_license_document(
             ),
         }
 
-    os.makedirs(
-        LICENSE_DIRECTORY,
-        exist_ok=True,
-    )
-
     temporary_path = (
         f"{LICENSE_FILE_PATH}.generated.tmp"
     )
@@ -941,6 +1003,10 @@ def install_generated_license_document(
     )
 
     try:
+        os.makedirs(
+            LICENSE_DIRECTORY,
+            exist_ok=True,
+        )
         for cleanup_path in (
             temporary_path,
             previous_license_path,
