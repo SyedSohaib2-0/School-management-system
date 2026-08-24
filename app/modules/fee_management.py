@@ -315,6 +315,26 @@ class SetFeeDashboardPage(QWidget):
             sibling_fee_button
         )
 
+        sibling_record_button = QPushButton(
+            "Print Sibling Record"
+        )
+        sibling_record_button.clicked.connect(
+            self._open_sibling_fee_record
+        )
+        button_column.addWidget(
+            sibling_record_button
+        )
+
+        individual_record_button = QPushButton(
+            "Print Individual Fee Set Record"
+        )
+        individual_record_button.clicked.connect(
+            self._open_individual_fee_record
+        )
+        button_column.addWidget(
+            individual_record_button
+        )
+
         layout.addLayout(button_column)
 
         back_button = QPushButton("Back to Fee Management")
@@ -360,6 +380,26 @@ class SetFeeDashboardPage(QWidget):
         """Open the Sibling Monthly Fee setting dialog."""
         dialog = SiblingFeeDialog(self)
         dialog.exec()
+
+    def _open_sibling_fee_record(self):
+        """Load and open the current sibling-family record."""
+        page = self.main_window.pages[
+            navigation.PAGE_SIBLING_FEE_RECORD
+        ]
+        page.reset_page()
+        self.main_window.go_to_page(
+            navigation.PAGE_SIBLING_FEE_RECORD
+        )
+
+    def _open_individual_fee_record(self):
+        """Load and open the current individual-fee record."""
+        page = self.main_window.pages[
+            navigation.PAGE_INDIVIDUAL_FEE_RECORD
+        ]
+        page.reset_page()
+        self.main_window.go_to_page(
+            navigation.PAGE_INDIVIDUAL_FEE_RECORD
+        )
 
 
 class SiblingFeeDialog(QDialog):
@@ -2525,4 +2565,3 @@ class SetIndividualFeePage(QWidget):
             ),
         )
         self._load_current_override()
-

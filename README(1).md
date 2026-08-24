@@ -657,7 +657,15 @@ An `APPROVAL_REQUIRED` result must be consciously reviewed by the software owner
 
 ### 1. Build with PyInstaller
 
-From the project root:
+From the project root, rebuild both Windows executables with:
+
+```bat
+tools\rebuild_windows.cmd
+```
+
+This creates the customer application at `dist\HiraModelSchool\HiraModelSchool.exe` and the separate owner-only licence generator at `owner_output\HiraModelSchoolLicenseGenerator\HiraModelSchoolLicenseGenerator.exe`.
+
+To build only the customer application manually:
 
 ```bash
 pyinstaller --clean HiraModelSchool.spec
@@ -670,6 +678,8 @@ dist\HiraModelSchool\
 ```
 
 The PyInstaller specification packages the application, Qt dependencies, styles, icons, logos, public licence key, and required runtime assets.
+
+The owner-only generator must be built separately with `HiraModelSchoolLicenseGenerator.spec`; it is deliberately excluded from the customer application and installer because it contains the encrypted private signing key.
 
 ---
 

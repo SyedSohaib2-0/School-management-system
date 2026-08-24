@@ -587,7 +587,7 @@ class FeeReceiptPage(QWidget):
                 body {{
                     font-family: Arial, Helvetica, sans-serif;
                     font-size: {density['body_font']};
-                    color: #111827;
+                    color: #000000;
                     margin: 0;
                     padding: 0;
                 }}
@@ -621,7 +621,7 @@ class FeeReceiptPage(QWidget):
                     white-space: nowrap;
                 }}
                 .line-value {{
-                    border-bottom: 1px solid #374151;
+                    border-bottom: 1px solid #000000;
                 }}
                 .fees {{
                     margin-top: 4px;
@@ -629,7 +629,7 @@ class FeeReceiptPage(QWidget):
                 }}
                 .fees th,
                 .fees td {{
-                    border: 1px solid #4B5563;
+                    border: 1px solid #000000;
                     padding: {density['cell_padding']};
                 }}
                 .serial {{
@@ -775,7 +775,7 @@ class FeeReceiptPage(QWidget):
                 body {{
                     font-family: Arial, Helvetica, sans-serif;
                     font-size: {density['body_font']};
-                    color: #111827;
+                    color: #000000;
                     margin: 0;
                     padding: 0;
                 }}
@@ -809,7 +809,7 @@ class FeeReceiptPage(QWidget):
                     white-space: nowrap;
                 }}
                 .line-value {{
-                    border-bottom: 1px solid #374151;
+                    border-bottom: 1px solid #000000;
                 }}
                 .fees {{
                     margin-top: 4px;
@@ -817,7 +817,7 @@ class FeeReceiptPage(QWidget):
                 }}
                 .fees th,
                 .fees td {{
-                    border: 1px solid #4B5563;
+                    border: 1px solid #000000;
                     padding: {density['cell_padding']};
                 }}
                 .serial {{
@@ -847,7 +847,7 @@ class FeeReceiptPage(QWidget):
                 }}
                 .history th,
                 .history td {{
-                    border: 1px solid #4B5563;
+                    border: 1px solid #000000;
                     padding: 1px;
                     text-align: center;
                 }}
@@ -1204,7 +1204,7 @@ class FeeReceiptPage(QWidget):
                 body {{
                     font-family: Arial, Helvetica, sans-serif;
                     font-size: {density['body_font']};
-                    color: #111827;
+                    color: #000000;
                     margin: 0;
                     padding: 0;
                 }}
@@ -1246,7 +1246,7 @@ class FeeReceiptPage(QWidget):
                     white-space: nowrap;
                 }}
                 .line-value {{
-                    border-bottom: 1px solid #374151;
+                    border-bottom: 1px solid #000000;
                 }}
                 .fees {{
                     margin-top: 3px;
@@ -1254,7 +1254,7 @@ class FeeReceiptPage(QWidget):
                 }}
                 .fees th,
                 .fees td {{
-                    border: 1px solid #4B5563;
+                    border: 1px solid #000000;
                     padding: {density['cell_padding']};
                 }}
                 .serial {{
@@ -1271,7 +1271,7 @@ class FeeReceiptPage(QWidget):
                     font-weight: 800;
                 }}
                 .total-row td {{
-                    border-top: 2px solid #111827;
+                    border-top: 2px solid #000000;
                 }}
                 .accountant {{
                     margin-top: 6px;
@@ -1288,7 +1288,7 @@ class FeeReceiptPage(QWidget):
                 }}
                 .history th,
                 .history td {{
-                    border: 1px solid #4B5563;
+                    border: 1px solid #000000;
                     padding: 1px 0;
                     text-align: center;
                 }}
@@ -1593,7 +1593,7 @@ class FeeReceiptPage(QWidget):
             )
 
             cut_pen = QPen(
-                QColor("#6B7280")
+                QColor("#000000")
             )
             cut_pen.setStyle(
                 Qt.PenStyle.DashLine

@@ -10,17 +10,18 @@ from datetime import datetime
 from html import escape
 import base64
 import json
-import mimetypes
 import re
 import shutil
 from pathlib import Path
 
 from PySide6.QtCore import (
+    QBuffer,
     QMarginsF,
     QEvent,
     Qt,
     QTime,
     QRegularExpression,
+    QIODevice,
 )
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QLabel, QLineEdit,
@@ -558,6 +559,37 @@ def _student_print_date_of_birth(
     )
 
 
+def _monochrome_print_image_base64(image_path: Path) -> str:
+    """Return a PNG data payload containing only black and white pixels."""
+    source = QImage(str(image_path))
+    if source.isNull():
+        return ""
+
+    white_canvas = QImage(
+        source.size(),
+        QImage.Format.Format_RGB32,
+    )
+    white_canvas.fill(QColor("white"))
+    painter = QPainter(white_canvas)
+    painter.drawImage(0, 0, source)
+    painter.end()
+
+    monochrome = white_canvas.convertToFormat(
+        QImage.Format.Format_Mono,
+        Qt.ImageConversionFlag.ThresholdDither
+        | Qt.ImageConversionFlag.MonoOnly,
+    )
+    buffer = QBuffer()
+    if not buffer.open(QIODevice.OpenModeFlag.WriteOnly):
+        return ""
+    if not monochrome.save(buffer, "PNG"):
+        buffer.close()
+        return ""
+    encoded = base64.b64encode(bytes(buffer.data())).decode("ascii")
+    buffer.close()
+    return encoded
+
+
 def _school_print_logo_data_uri() -> str:
     """
     Load the currently configured school logo and embed it in
@@ -630,29 +662,10 @@ def _school_print_logo_data_uri() -> str:
         if not candidate_path.is_file():
             continue
 
-        try:
-            mime_type = (
-                mimetypes.guess_type(
-                    candidate_path.name
-                )[0]
-                or "image/png"
-            )
-
-            encoded_image = (
-                base64.b64encode(
-                    candidate_path.read_bytes()
-                )
-                .decode(
-                    "ascii"
-                )
-            )
-
-            return (
-                f"data:{mime_type};"
-                f"base64,{encoded_image}"
-            )
-
-        except OSError:
+        encoded_image = _monochrome_print_image_base64(candidate_path)
+        if encoded_image:
+            return f"data:image/png;base64,{encoded_image}"
+        else:
             continue
 
     images_directory = (
@@ -687,29 +700,10 @@ def _school_print_logo_data_uri() -> str:
                 resolved_path
             )
 
-            try:
-                mime_type = (
-                    mimetypes.guess_type(
-                        candidate_path.name
-                    )[0]
-                    or "image/png"
-                )
-
-                encoded_image = (
-                    base64.b64encode(
-                        candidate_path.read_bytes()
-                    )
-                    .decode(
-                        "ascii"
-                    )
-                )
-
-                return (
-                    f"data:{mime_type};"
-                    f"base64,{encoded_image}"
-                )
-
-            except OSError:
+            encoded_image = _monochrome_print_image_base64(candidate_path)
+            if encoded_image:
+                return f"data:image/png;base64,{encoded_image}"
+            else:
                 continue
 
     return ""
@@ -1058,11 +1052,11 @@ def build_professional_student_print_html(
             f"<table width='{logo_size}' "
             f"height='{logo_size}' "
             "cellspacing='0' cellpadding='0' "
-            "style='border: 2px solid #173f77;'>"
+            "style='border: 2px solid #000000;'>"
             "<tr>"
             "<td align='center' valign='middle' "
             "style='font-size: 15pt; "
-            "font-weight: bold; color: #173f77;'>"
+            "font-weight: bold; color: #000000;'>"
             "HMS"
             "</td>"
             "</tr>"
@@ -1294,7 +1288,7 @@ def build_professional_student_print_html(
         <style>
             body {{
                 font-family: Arial, sans-serif;
-                color: #172033;
+                color: #000000;
                 margin: 0;
                 padding: 0;
                 background: #ffffff;
@@ -1303,21 +1297,21 @@ def build_professional_student_print_html(
             .school-name {{
                 font-size: {school_font}pt;
                 font-weight: bold;
-                color: #173f77;
+                color: #000000;
                 line-height: 1.05;
             }}
 
             .school-subtitle {{
                 font-size: 7pt;
                 font-weight: bold;
-                color: #9a7229;
+                color: #000000;
                 padding-top: 2px;
             }}
 
             .document-title {{
                 font-size: {title_font}pt;
                 font-weight: bold;
-                color: #173f77;
+                color: #000000;
                 text-align: center;
                 padding-top: 7px;
                 padding-bottom: 2px;
@@ -1327,7 +1321,7 @@ def build_professional_student_print_html(
             .document-date {{
                 font-size: 7.4pt;
                 font-weight: bold;
-                color: #7a5a21;
+                color: #000000;
                 text-align: center;
                 padding-top: 1px;
                 padding-bottom: 7px;
@@ -1336,12 +1330,12 @@ def build_professional_student_print_html(
 
             .details-table {{
                 border-collapse: collapse;
-                border: 1.5px solid #173f77;
+                border: 1.5px solid #000000;
                 page-break-inside: avoid;
             }}
 
             .details-table td {{
-                border: 1px solid #aeb9c8;
+                border: 1px solid #000000;
                 padding: {cell_padding}px;
                 vertical-align: middle;
                 line-height: {line_height};
@@ -1349,20 +1343,20 @@ def build_professional_student_print_html(
             }}
 
             .field-label {{
-                background: #edf3fa;
-                color: #173f77;
+                background: #ffffff;
+                color: #000000;
                 font-size: {label_font}pt;
                 font-weight: bold;
             }}
 
             .field-value {{
                 background: #ffffff;
-                color: #172033;
+                color: #000000;
                 font-size: {value_font}pt;
             }}
 
             .signature-text {{
-                border-top: 1px solid #172033;
+                border-top: 1px solid #000000;
                 padding-top: 3px;
                 text-align: center;
                 font-size: 7.4pt;
@@ -1370,22 +1364,22 @@ def build_professional_student_print_html(
             }}
 
             .footer {{
-                border-top: 1.5px solid #c69a3d;
+                border-top: 1.5px solid #000000;
                 padding-top: 4px;
                 text-align: center;
-                color: #374151;
+                color: #000000;
                 font-size: {footer_font}pt;
                 line-height: 1.2;
             }}
 
             .footer-school {{
-                color: #173f77;
+                color: #000000;
                 font-weight: bold;
             }}
 
             .print-date {{
                 padding-top: 3px;
-                color: #7a5a21;
+                color: #000000;
                 font-size: {footer_font}pt;
                 font-weight: bold;
                 text-align: center;
@@ -1423,7 +1417,7 @@ def build_professional_student_print_html(
                 <td
                     colspan="2"
                     style="
-                        border-bottom: 3px solid #c69a3d;
+                        border-bottom: 3px solid #000000;
                         height: 5px;
                     "
                 >
@@ -2318,8 +2312,6 @@ class StudentDashboardPage(QWidget):
             navigation.PAGE_SEARCH_STUDENT
         )
 
-
-
 # =====================================================================
 # Add Student
 # =====================================================================
@@ -2583,13 +2575,13 @@ class AddStudentPage(QWidget):
 
         add_label(
             "Select Class:",
-            0,
+            3,
             0,
         )
 
         form_grid.addWidget(
             self.class_combo,
-            0,
+            3,
             1,
         )
 
@@ -2603,8 +2595,8 @@ class AddStudentPage(QWidget):
         )
         form_grid.addWidget(
             self.coming_session_checkbox,
-            1,
-            0,
+            3,
+            2,
             1,
             2,
         )
@@ -2619,13 +2611,13 @@ class AddStudentPage(QWidget):
 
         add_label(
             "Student Name:",
-            2,
+            4,
             0,
         )
 
         form_grid.addWidget(
             self.student_name_input,
-            2,
+            4,
             1,
         )
 
@@ -2649,14 +2641,14 @@ class AddStudentPage(QWidget):
 
         add_label(
             "Gender:",
-            3,
-            0,
+            4,
+            2,
         )
 
         form_grid.addWidget(
             self.gender_combo,
+            4,
             3,
-            1,
         )
 
         # Father Name
@@ -2669,14 +2661,14 @@ class AddStudentPage(QWidget):
 
         add_label(
             "Father Name:",
-            4,
             0,
+            2,
         )
 
         form_grid.addWidget(
             self.father_name_input,
-            4,
-            1,
+            0,
+            3,
         )
 
         # Father CNIC
@@ -2696,15 +2688,19 @@ class AddStudentPage(QWidget):
             )
         )
 
+        self.father_cnic_input.editingFinished.connect(
+            self._load_family_details_from_cnic
+        )
+
         add_label(
             "Father CNIC:",
-            5,
+            0,
             0,
         )
 
         form_grid.addWidget(
             self.father_cnic_input,
-            5,
+            0,
             1,
         )
 
@@ -2761,13 +2757,13 @@ class AddStudentPage(QWidget):
 
         add_label(
             "Phone Number:",
-            6,
+            2,
             0,
         )
 
         form_grid.addWidget(
             phone_widget,
-            6,
+            2,
             1,
         )
 
@@ -2826,15 +2822,38 @@ class AddStudentPage(QWidget):
             1,
         )
 
+        same_phone_button = QPushButton(
+            "Same"
+        )
+
+        same_phone_button.setFixedSize(
+            48,
+            32,
+        )
+
+        same_phone_button.setToolTip(
+            "Copy Phone Number to WhatsApp Number"
+        )
+
+        same_phone_button.clicked.connect(
+            lambda: self.whatsapp_number_input.setText(
+                self.phone_number_input.text()
+            )
+        )
+
+        whatsapp_row.addWidget(
+            same_phone_button
+        )
+
         add_label(
             "WhatsApp Number:",
-            0,
+            2,
             2,
         )
 
         form_grid.addWidget(
             whatsapp_widget,
-            0,
+            2,
             3,
         )
 
@@ -2848,13 +2867,13 @@ class AddStudentPage(QWidget):
         add_label(
             "Current Address:",
             1,
-            2,
+            0,
         )
 
         form_grid.addWidget(
             self.current_address_input,
             1,
-            3,
+            1,
         )
 
         # Permanent Address
@@ -2864,15 +2883,60 @@ class AddStudentPage(QWidget):
             "Enter permanent address"
         )
 
+        permanent_address_widget = QWidget()
+
+        permanent_address_row = QHBoxLayout(
+            permanent_address_widget
+        )
+
+        permanent_address_row.setContentsMargins(
+            0,
+            0,
+            0,
+            0,
+        )
+
+        permanent_address_row.setSpacing(
+            8
+        )
+
+        permanent_address_row.addWidget(
+            self.permanent_address_input,
+            1,
+        )
+
+        same_address_button = QPushButton(
+            "Same"
+        )
+
+        same_address_button.setFixedSize(
+            48,
+            32,
+        )
+
+        same_address_button.setToolTip(
+            "Copy Current Address to Permanent Address"
+        )
+
+        same_address_button.clicked.connect(
+            lambda: self.permanent_address_input.setText(
+                self.current_address_input.text()
+            )
+        )
+
+        permanent_address_row.addWidget(
+            same_address_button
+        )
+
         add_label(
             "Permanent Address:",
-            2,
+            1,
             2,
         )
 
         form_grid.addWidget(
-            self.permanent_address_input,
-            2,
+            permanent_address_widget,
+            1,
             3,
         )
 
@@ -2966,14 +3030,14 @@ class AddStudentPage(QWidget):
 
         add_label(
             "Admission Date (Computer Date):",
-            3,
-            2,
+            5,
+            0,
         )
 
         form_grid.addWidget(
             admission_date_widget,
-            3,
-            3,
+            5,
+            1,
         )
 
         # Roll Number
@@ -3023,13 +3087,13 @@ class AddStudentPage(QWidget):
 
         add_label(
             "Roll Number:",
-            4,
+            5,
             2,
         )
 
         form_grid.addWidget(
             roll_number_widget,
-            4,
+            5,
             3,
         )
 
@@ -3095,13 +3159,13 @@ class AddStudentPage(QWidget):
 
         add_label(
             "Admission Number:",
-            5,
+            6,
             2,
         )
 
         form_grid.addWidget(
             admission_number_widget,
-            5,
+            6,
             3,
         )
 
@@ -3489,6 +3553,36 @@ class AddStudentPage(QWidget):
         self,
     ) -> None:
         self._enter_action_map = {
+            self.father_cnic_input:
+                self._focus_widget(
+                    self.father_name_input
+                ),
+
+            self.father_name_input:
+                self._focus_widget(
+                    self.current_address_input
+                ),
+
+            self.current_address_input:
+                self._focus_widget(
+                    self.permanent_address_input
+                ),
+
+            self.permanent_address_input:
+                self._focus_widget(
+                    self.phone_number_input
+                ),
+
+            self.phone_number_input:
+                self._focus_widget(
+                    self.whatsapp_number_input
+                ),
+
+            self.whatsapp_number_input:
+                self._focus_widget(
+                    self.class_combo
+                ),
+
             self.class_combo:
                 self._focus_widget(
                     self.coming_session_checkbox
@@ -3506,32 +3600,7 @@ class AddStudentPage(QWidget):
 
             self.gender_combo:
                 self._focus_widget(
-                    self.father_name_input
-                ),
-
-            self.father_name_input:
-                self._focus_widget(
-                    self.father_cnic_input
-                ),
-
-            self.father_cnic_input:
-                self._focus_widget(
-                    self.phone_number_input
-                ),
-
-            self.phone_number_input:
-                self._focus_widget(
-                    self.whatsapp_number_input
-                ),
-
-            self.whatsapp_number_input:
-                self._focus_widget(
-                    self.current_address_input
-                ),
-
-            self.current_address_input:
-                self._focus_widget(
-                    self.permanent_address_input
+                    self.admission_day_input
                 ),
 
             self.permanent_address_input:
@@ -3788,6 +3857,35 @@ class AddStudentPage(QWidget):
     # ========================================================
     # Page 1 validation
     # ========================================================
+
+    def _load_family_details_from_cnic(
+        self,
+    ) -> None:
+        father_cnic = self.father_cnic_input.text().strip()
+        if not student_service.validate_cnic(father_cnic):
+            return
+
+        family = student_service.find_family_by_father_cnic(
+            father_cnic
+        )
+        if family is None:
+            return
+
+        self.father_name_input.setText(
+            str(family["father_name"] or "")
+        )
+        self.phone_number_input.setText(
+            str(family["father_contact_number"] or "").removeprefix("+92")
+        )
+        self.whatsapp_number_input.setText(
+            str(family["whatsapp_number"] or "").removeprefix("+92")
+        )
+        self.current_address_input.setText(
+            str(family["current_address"] or "")
+        )
+        self.permanent_address_input.setText(
+            str(family["permanent_address"] or "")
+        )
 
     def _collect_student_information(
         self,

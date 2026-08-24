@@ -595,13 +595,21 @@ class PayFeePage(QWidget):
         )
         self.results_table.setColumnWidth(
             7,
-            140,
+            112,
         )
 
         self.results_table.setStyleSheet(
             """
             QWidget#tableCellContainer {
                 background-color: transparent;
+            }
+
+            QPushButton#payFeeSelectButton {
+                min-width: 50px;
+                max-width: 50px;
+                min-height: 20px;
+                max-height: 20px;
+                padding: 4px 10px;
             }
             """
         )
@@ -1252,8 +1260,8 @@ class PayFeePage(QWidget):
                 "payFeeSelectButton"
             )
             select_button.setFixedSize(
-                112,
-                34,
+                72,
+                30,
             )
             select_button.clicked.connect(
                 lambda _checked=False,
@@ -1270,9 +1278,9 @@ class PayFeePage(QWidget):
                 action_container
             )
             action_layout.setContentsMargins(
-                6,
                 4,
-                6,
+                4,
+                4,
                 4,
             )
             action_layout.setAlignment(

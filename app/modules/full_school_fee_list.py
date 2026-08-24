@@ -603,21 +603,16 @@ class FullSchoolFeeListPage(QWidget):
             )
 
             if status_row["fee_setup_missing"]:
-                row_background = "#dddddd"
                 fee_not_set_count += 1
             elif status_row["fee_color_status"] == "yellow":
-                row_background = "#fff5aa"
                 yellow_count += 1
             elif status_row["fee_color_status"] == "red":
-                row_background = "#ffbebe"
                 red_count += 1
-            else:
-                row_background = "#ffffff"
 
             centered = (
-                "border:0.55pt solid #555555;"
+                "border:0.55pt solid #000000;"
                 f"padding:{cell_padding_px}px;"
-                f"background-color:{row_background};"
+                "background-color:#ffffff;"
                 "text-align:center;white-space:nowrap;"
             )
             left = centered.replace("text-align:center", "text-align:left")
@@ -670,8 +665,8 @@ class FullSchoolFeeListPage(QWidget):
                 .class-heading {{
                     font-size:{max(font_size_pt + 1.0, 6.0)}pt;
                     font-weight:bold;
-                    background:#d9d9d9;
-                    border:0.55pt solid #555555;
+                    background:#ffffff;
+                    border:0.55pt solid #000000;
                     padding:{max(cell_padding_px, 1)}px;
                     text-align:center;
                 }}
@@ -682,9 +677,9 @@ class FullSchoolFeeListPage(QWidget):
                     margin:0;
                 }}
                 th {{
-                    border:0.55pt solid #555555;
+                    border:0.55pt solid #000000;
                     padding:{cell_padding_px}px;
-                    background:#e7e9ee;
+                    background:#ffffff;
                     font-weight:bold;
                     text-align:center;
                     white-space:nowrap;
@@ -726,7 +721,7 @@ class FullSchoolFeeListPage(QWidget):
             <table class="footer">
                 <tr>
                     <td style="text-align:left;">Total Students Shown: {len(class_rows)}</td>
-                    <td style="text-align:center;">Yellow: {yellow_count} &nbsp; Red: {red_count} &nbsp; Fee Not Set: {fee_not_set_count}</td>
+                    <td style="text-align:center;">1 Unpaid: {yellow_count} &nbsp; 2+ Unpaid: {red_count} &nbsp; Fee Not Set: {fee_not_set_count}</td>
                     <td style="text-align:right;">0-status students are hidden</td>
                 </tr>
             </table>

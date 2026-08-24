@@ -38,6 +38,8 @@ PAGE_CLASS_STATUS = "class_status"
 PAGE_SET_FEE_DASHBOARD = "set_fee_dashboard"
 PAGE_SET_CLASS_FEE = "set_class_fee"
 PAGE_SET_INDIVIDUAL_FEE = "set_individual_fee"
+PAGE_SIBLING_FEE_RECORD = "sibling_fee_record"
+PAGE_INDIVIDUAL_FEE_RECORD = "individual_fee_record"
 PAGE_FULL_SCHOOL_LIST = "full_school_list"
 PAGE_MONTH_RANGE_FEE_REPORT = "month_range_fee_report"
 # ---------------------------------------------------------------------------

@@ -1054,14 +1054,7 @@ class RealTimeFinancePage(QWidget):
                 </tr>
             """
 
-        final_income = float(
-            summary["final_income"]
-        )
-
-        if final_income < 0:
-            final_income_color = "#b00020"
-        else:
-            final_income_color = "#166534"
+        final_income_color = "#000000"
 
         return f"""
         <html>
@@ -1111,8 +1104,8 @@ class RealTimeFinancePage(QWidget):
 
                 .kpi-table td {{
                     width: 33.33%;
-                    border: 1px solid #aeb6c4;
-                    background-color: #f1f3f7;
+                    border: 1px solid #000000;
+                    background-color: #ffffff;
                     text-align: center;
                     padding: 10px;
                 }}
@@ -1137,8 +1130,8 @@ class RealTimeFinancePage(QWidget):
                 .section-heading {{
                     font-size: 11pt;
                     font-weight: bold;
-                    background-color: #d9d9d9;
-                    border: 1px solid #555555;
+                    background-color: #ffffff;
+                    border: 1px solid #000000;
                     padding: 5px;
                     margin-top: 10px;
                 }}
@@ -1149,15 +1142,15 @@ class RealTimeFinancePage(QWidget):
                 }}
 
                 .details-table th {{
-                    border: 1px solid #555555;
-                    background-color: #e7e9ee;
+                    border: 1px solid #000000;
+                    background-color: #ffffff;
                     padding: 5px;
                     text-align: center;
                     font-weight: bold;
                 }}
 
                 .details-table td {{
-                    border: 1px solid #555555;
+                    border: 1px solid #000000;
                     padding: 5px;
                 }}
 
@@ -1171,7 +1164,7 @@ class RealTimeFinancePage(QWidget):
                 }}
 
                 .total-row td {{
-                    background-color: #eeeeee;
+                    background-color: #ffffff;
                     font-weight: bold;
                 }}
 

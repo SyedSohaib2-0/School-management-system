@@ -62,6 +62,9 @@ class IsolatedApplication:
         self.sibling_fee_service = importlib.import_module(
             "app.services.sibling_fee_service"
         )
+        self.fee_setting_report_service = importlib.import_module(
+            "app.services.fee_setting_report_service"
+        )
 
         def test_connection():
             return self.connect()
@@ -75,6 +78,7 @@ class IsolatedApplication:
             self.expense_service,
             self.real_time_finance_service,
             self.sibling_fee_service,
+            self.fee_setting_report_service,
         ):
             module.get_connection = test_connection
 

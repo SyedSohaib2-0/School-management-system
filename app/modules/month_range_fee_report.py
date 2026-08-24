@@ -571,10 +571,10 @@ class MonthRangeFeeReportPage(QWidget):
             .meta {{ width:100%; font-size:7.5pt; margin:1px 0 4px 0; }}
             .meta td {{ border:none; padding:0; }}
             .class-block {{ page-break-inside:avoid; margin:0 0 5px 0; }}
-            .class-heading {{ background:#d9d9d9; border:0.6pt solid #555; padding:2px; font-weight:bold; }}
+            .class-heading {{ background:#fff; border:0.6pt solid #000; padding:2px; font-weight:bold; }}
             table.student-table {{ width:100%; border-collapse:collapse; table-layout:fixed; }}
-            th {{ background:#e7e9ee; border:0.6pt solid #555; padding:2px; text-align:center; }}
-            td {{ border:0.6pt solid #555; padding:2px; vertical-align:middle; }}
+            th {{ background:#fff; border:0.6pt solid #000; padding:2px; text-align:center; }}
+            td {{ background:#fff; border:0.6pt solid #000; padding:2px; vertical-align:middle; }}
             td.center {{ text-align:center; white-space:nowrap; }}
             tr {{ page-break-inside:avoid; }}
         </style></head><body>

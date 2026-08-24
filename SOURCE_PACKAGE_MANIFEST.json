@@ -7,8 +7,8 @@
                            "Adds persistent authentication throttling, credential audit events, backup-request authentication, trusted licence time warnings, and key-store recovery.",
                            "Preserves archived unpaid-fee evidence, hardens restore cleanup, and restricts installer cleanup to application-owned files."
                        ],
-    "generated_at_utc":  "2026-08-10T14:06:34.5285358Z",
-    "file_count":  140,
+    "generated_at_utc":  "2026-08-10T14:53:10.0874486Z",
+    "file_count":  142,
     "files":  [
                   {
                       "path":  "app/__init__.py",
@@ -339,6 +339,11 @@
                       "path":  "docs/REGRESSION_TESTS.md",
                       "sha256":  "a9c5d05845023bcbb61cfe529e948b6df8860e9298d06993e471fa14dd99c9b7",
                       "size_bytes":  1491
+                  },
+                  {
+                      "path":  "docs/Software_Maintenance_Handover_Guide_v1.1.0.docx",
+                      "sha256":  "946b22916ab76a2348253efcbfc1406b10ccbc6c0e7a5f1b9f0e66fa5fa4c841",
+                      "size_bytes":  45836
                   },
                   {
                       "path":  "HiraModelSchool.spec",
@@ -694,6 +699,11 @@
                       "path":  "tests/unit/test_backup_settings_and_repository_unit.py",
                       "sha256":  "b442ff97afc942415d954d0fb8bd76a566814a0f26d2e7c3dc69907a3dc8fe0f",
                       "size_bytes":  4689
+                  },
+                  {
+                      "path":  "tools/create_maintenance_handover_doc.py",
+                      "sha256":  "b93650e354184083614030c1c7f33756ac58383884784fe8c3ede0d1d9453fd1",
+                      "size_bytes":  26373
                   },
                   {
                       "path":  "tools/deployment_preflight.py",

@@ -432,8 +432,7 @@ class ComingSessionCapacityReportPage(QWidget):
         report = self.report or {}
         rows_html = []
         for row in self.report_rows:
-            over = row["status"] == "Over Capacity"
-            status_style = "color:#B42318;font-weight:bold;" if over else "color:#137A43;font-weight:bold;"
+            status_style = "color:#000000;font-weight:bold;"
             rows_html.append(
                 "<tr>"
                 f"<td>{escape(str(row['class_name']))}</td>"
@@ -453,8 +452,8 @@ class ComingSessionCapacityReportPage(QWidget):
             .meta {{ width:100%; margin-bottom:6px; font-size:8pt; }}
             .meta td {{ border:none; padding:1px; }}
             table.report {{ width:100%; border-collapse:collapse; table-layout:fixed; }}
-            table.report th {{ background:#E7E9EE; border:0.7pt solid #555; padding:4px 2px; text-align:center; }}
-            table.report td {{ border:0.7pt solid #555; padding:4px 2px; text-align:center; }}
+            table.report th {{ background:#FFFFFF; border:0.7pt solid #000; padding:4px 2px; text-align:center; }}
+            table.report td {{ background:#FFFFFF; border:0.7pt solid #000; padding:4px 2px; text-align:center; }}
             table.report td:first-child {{ text-align:left; font-weight:bold; }}
             .num {{ white-space:nowrap; }}
             tr {{ page-break-inside:avoid; }}

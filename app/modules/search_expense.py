@@ -883,15 +883,15 @@ class SearchExpensePage(QWidget):
                 }}
 
                 .expense-table th {{
-                    border: 1px solid #555555;
-                    background-color: #e7e9ee;
+                    border: 1px solid #000000;
+                    background-color: #ffffff;
                     padding: 6px;
                     text-align: center;
                     font-weight: bold;
                 }}
 
                 .expense-table td {{
-                    border: 1px solid #555555;
+                    border: 1px solid #000000;
                     padding: 6px;
                 }}
 
@@ -910,7 +910,7 @@ class SearchExpensePage(QWidget):
 
                 .total-row td {{
                     font-weight: bold;
-                    background-color: #eeeeee;
+                    background-color: #ffffff;
                 }}
 
                 .signatures {{

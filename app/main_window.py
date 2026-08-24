@@ -46,6 +46,10 @@ from app.modules.fee_receipt import FeeReceiptPage
 from app.modules.class_fee_status import ClassFeeStatusPage
 from app.modules.full_school_fee_list import FullSchoolFeeListPage
 from app.modules.month_range_fee_report import MonthRangeFeeReportPage
+from app.modules.fee_setting_reports import (
+    SiblingFeeRecordPage,
+    IndividualFeeRecordPage,
+)
 
 from app.modules.expense_management import (
     ExpenseManagementDashboardPage,
@@ -749,6 +753,18 @@ class MainWindow(QMainWindow):
         self.add_page(
             navigation.PAGE_SET_INDIVIDUAL_FEE,
             set_individual_fee_page,
+        )
+
+        sibling_fee_record_page = SiblingFeeRecordPage(self)
+        self.add_page(
+            navigation.PAGE_SIBLING_FEE_RECORD,
+            sibling_fee_record_page,
+        )
+
+        individual_fee_record_page = IndividualFeeRecordPage(self)
+        self.add_page(
+            navigation.PAGE_INDIVIDUAL_FEE_RECORD,
+            individual_fee_record_page,
         )
 
     def _register_placeholder_pages(self) -> None:

@@ -581,6 +581,28 @@ def find_existing_student_identity(
         connection.close()
 
 
+def find_family_by_father_cnic(father_cnic: str):
+    """Return the first stored family detail row for a Father CNIC."""
+    normalized_father_cnic = normalize_father_cnic(father_cnic)
+    connection = get_connection()
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+            SELECT father_name, father_contact_number, whatsapp_number,
+                   current_address, permanent_address
+            FROM students
+            WHERE COALESCE(TRIM(father_cnic), '') = ?
+            ORDER BY updated_at DESC, student_id DESC
+            LIMIT 1
+            """,
+            (normalized_father_cnic,),
+        )
+        return cursor.fetchone()
+    finally:
+        connection.close()
+
+
 def find_suspected_duplicate_student_groups():
     """Report normalized duplicate identities without modifying any record."""
     connection = get_connection()
@@ -1856,6 +1878,7 @@ def add_student(
     created_by: str = "admin",
     coming_session_admission: bool = False,
     use_system_admission_datetime: bool = False,
+    connection=None,
 ) -> int:
     """
     Insert a new student record. Student and father names are stored in
@@ -1959,13 +1982,16 @@ def add_student(
     admission_date = admitted_at.strftime("%Y-%m-%d %H:%M:%S")
     now = current_time.strftime("%Y-%m-%d %H:%M:%S")
 
-    connection = get_connection()
+    owns_connection = connection is None
+    if owns_connection:
+        connection = get_connection()
     cursor = connection.cursor()
     try:
         # BEGIN IMMEDIATE makes the Active-strength check and INSERT one
         # atomic operation. A second admission cannot cross the capacity
         # between the preflight and the final student INSERT.
-        connection.execute("BEGIN IMMEDIATE")
+        if owns_connection:
+            connection.execute("BEGIN IMMEDIATE")
 
         fixture_mode = bool(cursor.execute("SELECT HMS_TEST_FIXTURE_MODE()").fetchone()[0])
         admission_sequence = None
@@ -2258,13 +2284,16 @@ def add_student(
             changed_by=str(created_by or "admin"),
         )
 
-        connection.commit()
+        if owns_connection:
+            connection.commit()
         return new_student_id
     except Exception:
-        connection.rollback()
+        if owns_connection:
+            connection.rollback()
         raise
     finally:
-        connection.close()
+        if owns_connection:
+            connection.close()
 
 
 

@@ -2132,10 +2132,82 @@ def get_effective_fee(
         )
     )
 
-    # SIBLING_MONTHLY_FEE_PRECEDENCE_V9
-    # An eligible sibling assignment controls the class-fee percentage
-    # for its effective period. Outside an eligible sibling group, the
-    # existing individual override rules continue unchanged.
+    override_columns = _table_column_names(cursor, "student_fee_override")
+    removal_clause = ""
+    override_parameters = [
+        student_id, year, year, month_number, year, year, month_number
+    ]
+    if "removed_effective_year" in override_columns:
+        removal_clause = """
+          AND (removed_effective_year IS NULL
+               OR removed_effective_year > ?
+               OR (removed_effective_year = ? AND removed_effective_month > ?))
+        """
+        override_parameters.extend([year, year, month_number])
+
+    cursor.execute(
+        f"""
+        SELECT * FROM student_fee_override
+        WHERE student_id = ?
+          AND (effective_from_year < ? OR
+               (effective_from_year = ? AND effective_from_month <= ?))
+          AND (effective_to_year IS NULL OR effective_to_year > ? OR
+               (effective_to_year = ? AND effective_to_month >= ?))
+          {removal_clause}
+        ORDER BY effective_from_year DESC, effective_from_month DESC, id DESC
+        LIMIT 1
+        """,
+        override_parameters,
+    )
+
+    override_row = (
+        cursor.fetchone()
+    )
+
+    # INDIVIDUAL_FEE_OVER_SIBLING_PRECEDENCE_V32
+    # An individual rule changes only this student's charged fee. The
+    # student's sibling assignment remains intact so they still count when
+    # deciding which brother pays in full and which brothers are discounted.
+    if override_row:
+        percentage = (
+            override_row[
+                "monthly_fee_percentage"
+            ]
+        )
+
+        if percentage is not None:
+            monthly_fee = (
+                _round_percentage_fee_to_nearest_ten(
+                    class_fee["monthly_fee"]
+                    * float(percentage)
+                    / 100.0
+                )
+            )
+
+        elif (
+            override_row["monthly_fee"]
+            is not None
+        ):
+            # Compatibility with old fixed Monthly Fee overrides.
+            monthly_fee = float(
+                override_row[
+                    "monthly_fee"
+                ]
+            )
+
+        else:
+            monthly_fee = float(
+                class_fee[
+                    "monthly_fee"
+                ]
+            )
+
+        return {
+            "monthly_fee": monthly_fee,
+            "fee_source": "Individual",
+            "monthly_fee_percentage": percentage,
+        }
+
     from app.services import sibling_fee_service
 
     sibling_assignment = (
@@ -2182,77 +2254,7 @@ def get_effective_fee(
             ),
         }
 
-    override_columns = _table_column_names(cursor, "student_fee_override")
-    removal_clause = ""
-    override_parameters = [
-        student_id, year, year, month_number, year, year, month_number
-    ]
-    if "removed_effective_year" in override_columns:
-        removal_clause = """
-          AND (removed_effective_year IS NULL
-               OR removed_effective_year > ?
-               OR (removed_effective_year = ? AND removed_effective_month > ?))
-        """
-        override_parameters.extend([year, year, month_number])
-
-    cursor.execute(
-        f"""
-        SELECT * FROM student_fee_override
-        WHERE student_id = ?
-          AND (effective_from_year < ? OR
-               (effective_from_year = ? AND effective_from_month <= ?))
-          AND (effective_to_year IS NULL OR effective_to_year > ? OR
-               (effective_to_year = ? AND effective_to_month >= ?))
-          {removal_clause}
-        ORDER BY effective_from_year DESC, effective_from_month DESC, id DESC
-        LIMIT 1
-        """,
-        override_parameters,
-    )
-
-    override_row = (
-        cursor.fetchone()
-    )
-
-    if not override_row:
-        return class_fee
-
-    percentage = (
-        override_row[
-            "monthly_fee_percentage"
-        ]
-    )
-
-    if percentage is not None:
-        monthly_fee = (
-            _round_percentage_fee_to_nearest_ten(
-                class_fee["monthly_fee"]
-                * float(percentage)
-                / 100.0
-            )
-        )
-
-    elif (
-        override_row["monthly_fee"]
-        is not None
-    ):
-        # Compatibility with old fixed Monthly Fee overrides.
-        monthly_fee = float(
-            override_row[
-                "monthly_fee"
-            ]
-        )
-
-    else:
-        monthly_fee = float(
-            class_fee[
-                "monthly_fee"
-            ]
-        )
-
-    return {
-        "monthly_fee": monthly_fee,
-    }
+    return class_fee
 
 
 

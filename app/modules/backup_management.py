@@ -475,6 +475,29 @@ class BackupManagementPage(QWidget):
             form_layout
         )
 
+        show_password_check = QCheckBox(
+            "Show password"
+        )
+
+        show_password_check.toggled.connect(
+            lambda visible: (
+                password_edit.setEchoMode(
+                    QLineEdit.EchoMode.Normal
+                    if visible
+                    else QLineEdit.EchoMode.Password
+                ),
+                confirm_edit.setEchoMode(
+                    QLineEdit.EchoMode.Normal
+                    if visible
+                    else QLineEdit.EchoMode.Password
+                ),
+            )
+        )
+
+        dialog_layout.addWidget(
+            show_password_check
+        )
+
         policy_label = QLabel(
             "Minimum 12 characters with uppercase, lowercase, number, and symbol."
         )

@@ -941,9 +941,9 @@ def build_whole_school_print_html(
             }}
 
             th {{
-                border: 1px solid #444444;
+                border: 1px solid #000000;
                 padding: 1px 2px;
-                background-color: #e7e9ee;
+                background-color: #ffffff;
                 text-align: center;
                 font-weight: bold;
                 font-size: 6.25pt;
@@ -952,7 +952,7 @@ def build_whole_school_print_html(
             }}
 
             td {{
-                border: 1px solid #555555;
+                border: 1px solid #000000;
                 padding: 1px 2px;
                 text-align: center;
                 font-size: 6.5pt;
@@ -1061,15 +1061,15 @@ def build_student_list_print_html(
             }}
 
             th {{
-                border: 1px solid #444444;
+                border: 1px solid #000000;
                 padding: 6px;
-                background-color: #e7e9ee;
+                background-color: #ffffff;
                 text-align: center;
                 font-weight: bold;
             }}
 
             td {{
-                border: 1px solid #555555;
+                border: 1px solid #000000;
                 padding: 5px;
                 text-align: center;
             }}
@@ -1174,7 +1174,21 @@ def export_student_list_pdf(class_name: str, list_type_label: str, students, sav
         leading=9.5,
         wordWrap="CJK",
     )
-    table_data = [["Admission Number", "Roll Number", "Student Name", "Father Name"]]
+    header_style = ParagraphStyle(
+        "ClassListHeader",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=8,
+        leading=9.5,
+        alignment=1,
+        textColor=colors.black,
+    )
+    table_data = [[
+        Paragraph("Admission No", header_style),
+        Paragraph("Roll No", header_style),
+        Paragraph("Student Name", header_style),
+        Paragraph("Father Name", header_style),
+    ]]
     for student_row in students:
         student_name = student_service.display_name_with_stars(
             student_row["student_name"], student_row["failure_count"]
@@ -1193,12 +1207,13 @@ def export_student_list_pdf(class_name: str, list_type_label: str, students, sav
         repeatRows=1,
     )
     table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2F6FED")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BACKGROUND", (0, 0), (-1, -1), colors.white),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
         ("ALIGN", (1, 0), (1, -1), "CENTER"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#C9CED6")),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F5F6FA")]),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, 0), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
     ]))
     elements.append(table)
 

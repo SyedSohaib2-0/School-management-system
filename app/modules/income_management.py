@@ -21,6 +21,7 @@ from html import escape
 
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import (
+    QImage,
     QPainter,
     QTextDocument,
     QPageLayout,
@@ -694,8 +695,13 @@ class IncomeManagementPage(QWidget):
         temporary_file.close()
 
         chart_pixmap = self.chart_view.grab()
+        chart_image = chart_pixmap.toImage().convertToFormat(
+            QImage.Format.Format_Mono,
+            Qt.ImageConversionFlag.ThresholdDither
+            | Qt.ImageConversionFlag.MonoOnly,
+        )
 
-        if not chart_pixmap.save(
+        if not chart_image.save(
             chart_path,
             "PNG",
         ):
@@ -737,18 +743,7 @@ class IncomeManagementPage(QWidget):
             total_expenses = float(
                 row["total_expenses"]
             )
-            final_income = float(
-                row["final_income"]
-            )
-
-            if final_income < 0:
-                income_style = (
-                    "color:#b00020; font-weight:bold;"
-                )
-            else:
-                income_style = (
-                    "color:#166534; font-weight:bold;"
-                )
+            income_style = "color:#000000; font-weight:bold;"
 
             monthly_rows_html += f"""
                 <tr>
@@ -776,14 +771,7 @@ class IncomeManagementPage(QWidget):
                 </tr>
             """
 
-        final_income = float(
-            summary["final_income"]
-        )
-
-        if final_income < 0:
-            final_income_color = "#b00020"
-        else:
-            final_income_color = "#166534"
+        final_income_color = "#000000"
 
         return f"""
         <html>
@@ -825,8 +813,8 @@ class IncomeManagementPage(QWidget):
                 }}
 
                 .kpi-table td {{
-                    border: 1px solid #aeb6c4;
-                    background-color: #f1f3f7;
+                    border: 1px solid #000000;
+                    background-color: #ffffff;
                     text-align: center;
                     padding: 10px;
                     width: 33.33%;
@@ -869,15 +857,15 @@ class IncomeManagementPage(QWidget):
                 }}
 
                 .monthly-table th {{
-                    border: 1px solid #555555;
-                    background-color: #e7e9ee;
+                    border: 1px solid #000000;
+                    background-color: #ffffff;
                     padding: 5px;
                     text-align: center;
                     font-weight: bold;
                 }}
 
                 .monthly-table td {{
-                    border: 1px solid #555555;
+                    border: 1px solid #000000;
                     padding: 5px;
                 }}
 
@@ -891,7 +879,7 @@ class IncomeManagementPage(QWidget):
                 }}
 
                 .total-row td {{
-                    background-color: #eeeeee;
+                    background-color: #ffffff;
                     font-weight: bold;
                 }}
 
